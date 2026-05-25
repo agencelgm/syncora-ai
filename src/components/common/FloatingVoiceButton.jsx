@@ -10,7 +10,7 @@ export default function FloatingVoiceButton() {
     <>
       <button
         onClick={() => setShowRecorder(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-gold text-background rounded-full shadow-lg shadow-gold/40 flex items-center justify-center z-[100] hover:scale-110 transition-transform"
+        className="fixed bottom-20 left-4 w-14 h-14 bg-gold text-background rounded-full shadow-lg shadow-gold/40 flex items-center justify-center z-[100] hover:scale-110 transition-transform"
         aria-label="Enregistrer une tâche"
       >
         <Mic size={24} />
