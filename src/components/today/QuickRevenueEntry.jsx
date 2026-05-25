@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DollarSign, Plus, X, CheckCircle2, Link2 } from 'lucide-react';
+import { DollarSign, Plus, X, CheckCircle2, Link2, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
+import TaskPickerDrawer from '@/components/objectives/TaskPickerDrawer';
 
 export default function QuickRevenueEntry({ onAdded }) {
   const [open, setOpen] = useState(false);
@@ -12,6 +13,7 @@ export default function QuickRevenueEntry({ onAdded }) {
   const [actionLabel, setActionLabel] = useState('');
   const [tasks, setTasks] = useState([]);
   const [saved, setSaved] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (open) base44.entities.Task.filter({ status: 'done' }, '-completed_at', 30).then(setTasks);
@@ -94,16 +96,25 @@ export default function QuickRevenueEntry({ onAdded }) {
                   />
 
                   <label className="text-xs text-muted-foreground mb-1 mt-1 flex items-center gap-1"><Link2 size={12} /> Action qui a généré ce revenu</label>
-                  <select
-                    value={taskId}
-                    onChange={e => setTaskId(e.target.value)}
-                    className="w-full bg-muted rounded-xl px-4 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-success/50 mb-2"
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    className="w-full bg-muted rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:border-success/50 mb-2 flex items-center justify-between text-left min-h-[44px]"
                   >
-                    <option value="">— Aucune tâche liée —</option>
-                    {tasks.map(t => (
-                      <option key={t.id} value={t.id}>{t.title}</option>
-                    ))}
-                  </select>
+                    <span className={taskId ? 'text-foreground truncate pr-2' : 'text-muted-foreground'}>
+                      {taskId
+                        ? (tasks.find(t => t.id === taskId)?.title || 'Tâche liée')
+                        : '— Aucune tâche liée —'}
+                    </span>
+                    <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                  </button>
+                  <TaskPickerDrawer
+                    open={pickerOpen}
+                    onClose={() => setPickerOpen(false)}
+                    tasks={tasks}
+                    selectedId={taskId}
+                    onSelect={setTaskId}
+                  />
                   {!taskId && (
                     <input
                       type="text"

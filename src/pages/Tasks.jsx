@@ -5,6 +5,7 @@ import { Plus, Filter, CheckCircle2, Clock, AlertTriangle, Zap, Circle, RotateCc
 import { format } from 'date-fns';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskItem from '@/components/tasks/TaskItem';
+import PullToRefresh from '@/components/common/PullToRefresh';
 
 const FILTERS = [
   { key: 'all', label: 'Toutes' },
@@ -69,6 +70,7 @@ export default function Tasks() {
   const sortedByPriority = [...filtered].sort((a, b) => (b.ai_priority_score || 0) - (a.ai_priority_score || 0));
 
   return (
+    <PullToRefresh onRefresh={loadTasks}>
     <div className="px-4 pt-8 pb-4">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">Tâches</h1>
@@ -159,5 +161,6 @@ export default function Tasks() {
         )}
       </AnimatePresence>
     </div>
+    </PullToRefresh>
   );
 }

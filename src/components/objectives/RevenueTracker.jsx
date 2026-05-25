@@ -118,8 +118,12 @@ export default function RevenueTracker({ revenues, onRefresh }) {
                 </p>
               )}
             </div>
-            <button onClick={() => remove(r.id)} className="text-muted-foreground hover:text-destructive p-1 ml-2">
-              <Trash2 size={14} />
+            <button
+              onClick={() => remove(r.id)}
+              aria-label="Supprimer le revenu"
+              className="text-muted-foreground hover:text-destructive ml-2 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
+            >
+              <Trash2 size={16} />
             </button>
           </div>
         ))}

@@ -21,7 +21,11 @@ export default function TaskItem({ task, index, onComplete, onDefer, onDelete, o
       className="bg-card rounded-2xl p-4 border border-border"
     >
       <div className="flex items-start gap-3">
-        <button onClick={!isDone ? onComplete : undefined} className="mt-0.5 flex-shrink-0">
+        <button
+          onClick={!isDone ? onComplete : undefined}
+          aria-label={isDone ? 'Tâche faite' : 'Marquer comme faite'}
+          className="flex-shrink-0 min-w-[44px] min-h-[44px] -ml-2 flex items-center justify-center"
+        >
           {isDone
             ? <CheckCircle2 size={20} className="text-success" />
             : <Circle size={20} className={config.color} strokeWidth={1.8} />
@@ -53,19 +57,31 @@ export default function TaskItem({ task, index, onComplete, onDefer, onDelete, o
             <p className="text-xs text-gold/60 mt-1.5 italic">"{task.ai_coaching_note}"</p>
           )}
         </div>
-        <div className="flex flex-col gap-1.5 flex-shrink-0">
+        <div className="flex flex-col gap-0.5 flex-shrink-0 -mr-2">
           {!isDone && (
             <>
-              <button onClick={onDefer} className="text-muted-foreground hover:text-orange-400 transition-colors p-1">
-                <RotateCcw size={14} />
+              <button
+                onClick={onDefer}
+                aria-label="Reporter"
+                className="text-muted-foreground hover:text-orange-400 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                <RotateCcw size={16} />
               </button>
-              <button onClick={onEdit} className="text-muted-foreground hover:text-blue-electric transition-colors p-1">
-                <Pencil size={14} />
+              <button
+                onClick={onEdit}
+                aria-label="Modifier"
+                className="text-muted-foreground hover:text-blue-electric transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                <Pencil size={16} />
               </button>
             </>
           )}
-          <button onClick={onDelete} className="text-muted-foreground hover:text-destructive transition-colors p-1">
-            <Trash2 size={14} />
+          <button
+            onClick={onDelete}
+            aria-label="Supprimer"
+            className="text-muted-foreground hover:text-destructive transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          >
+            <Trash2 size={16} />
           </button>
         </div>
       </div>

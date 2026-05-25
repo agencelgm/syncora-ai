@@ -12,6 +12,7 @@ import StreakBadge from '@/components/today/StreakBadge';
 import ProgressRing from '@/components/today/ProgressRing';
 import QuickRevenueEntry from '@/components/today/QuickRevenueEntry';
 import WeekCalendar from '@/components/today/WeekCalendar';
+import PullToRefresh from '@/components/common/PullToRefresh';
 
 export default function Today() {
   const [tasks, setTasks] = useState([]);
@@ -70,6 +71,7 @@ export default function Today() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="px-4 pt-8 pb-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -159,5 +161,6 @@ export default function Today() {
 
       <DailyBriefing open={briefingOpen} onClose={() => setBriefingOpen(false)} tasks={tasks} objectives={objectives} />
     </div>
+    </PullToRefresh>
   );
 }
