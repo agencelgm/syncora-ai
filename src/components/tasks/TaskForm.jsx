@@ -70,10 +70,10 @@ export default function TaskForm({ task, onSave, onClose }) {
         ref={scrollRef}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border max-h-[80dvh] overflow-y-auto"
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border max-h-[65dvh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-      <div className="px-4 pt-3 pb-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}>
+      <div className="px-4 pt-3" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-foreground">{task ? 'Modifier la tâche' : 'Nouvelle tâche'}</h3>
           <button onClick={onClose} className="text-muted-foreground"><X size={20} /></button>
