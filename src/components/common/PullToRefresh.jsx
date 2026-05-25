@@ -63,9 +63,7 @@ export default function PullToRefresh({ onRefresh, children }) {
           />
         )}
       </div>
-      <div style={{ transform: `translateY(${refreshing ? 0 : 0}px)` }}>
-        {children}
-      </div>
+      <div>{children}</div>
     </div>
   );
 }

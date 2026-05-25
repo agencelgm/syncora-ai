@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wand2, Loader2, Camera } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -60,10 +61,10 @@ export default function TaskForm({ task, onSave, onClose }) {
     onSave({ ...form, estimated_value_fcfa: Number(form.estimated_value_fcfa) || 0 });
   };
 
-  return (
+  const modal = (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-end"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-end"
       onClick={onClose}
     >
       <motion.div
@@ -71,9 +72,10 @@ export default function TaskForm({ task, onSave, onClose }) {
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
         className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border overflow-y-auto"
+        style={{ maxHeight: 'calc(100dvh - 12px)' }}
         onClick={e => e.stopPropagation()}
       >
-      <div className="px-4 pt-3" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-foreground">{task ? 'Modifier la tâche' : 'Nouvelle tâche'}</h3>
           <button onClick={onClose} className="text-muted-foreground"><X size={20} /></button>
@@ -169,4 +171,6 @@ export default function TaskForm({ task, onSave, onClose }) {
       </AnimatePresence>
     </motion.div>
   );
+
+  return createPortal(modal, document.body);
 }
