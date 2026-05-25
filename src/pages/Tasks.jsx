@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Filter, CheckCircle2, Clock, AlertTriangle, Zap, Circle, RotateCcw, Trash2 } from 'lucide-react';
+import { Plus, Filter, CheckCircle2, Clock, AlertTriangle, Zap, Circle, RotateCcw, Trash2, Flame, CalendarClock } from 'lucide-react';
+import { format } from 'date-fns';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskItem from '@/components/tasks/TaskItem';
 
@@ -16,6 +17,7 @@ const FILTERS = [
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState('todo');
+  const [quickFilter, setQuickFilter] = useState(null); // 'high' | 'today' | null
   const [showForm, setShowForm] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,13 @@ export default function Tasks() {
     loadTasks();
   };
 
-  const filtered = tasks.filter(t => filter === 'all' || t.status === filter);
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const filtered = tasks.filter(t => {
+    if (filter !== 'all' && t.status !== filter) return false;
+    if (quickFilter === 'high' && !['critical', 'high'].includes(t.priority)) return false;
+    if (quickFilter === 'today' && t.due_date !== today) return false;
+    return true;
+  });
   const sortedByPriority = [...filtered].sort((a, b) => (b.ai_priority_score || 0) - (a.ai_priority_score || 0));
 
   return (
@@ -70,7 +78,7 @@ export default function Tasks() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-1 no-scrollbar">
         {FILTERS.map(f => (
           <button
             key={f.key}
@@ -84,6 +92,30 @@ export default function Tasks() {
             {f.label}
           </button>
         ))}
+      </div>
+
+      {/* Quick filters */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setQuickFilter(quickFilter === 'high' ? null : 'high')}
+          className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
+            quickFilter === 'high'
+              ? 'bg-red-400/15 border-red-400/40 text-red-400'
+              : 'bg-card border-border text-muted-foreground'
+          }`}
+        >
+          <Flame size={13} /> Priorité élevée
+        </button>
+        <button
+          onClick={() => setQuickFilter(quickFilter === 'today' ? null : 'today')}
+          className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
+            quickFilter === 'today'
+              ? 'bg-blue-electric/15 border-blue-electric/40 text-blue-electric'
+              : 'bg-card border-border text-muted-foreground'
+          }`}
+        >
+          <CalendarClock size={13} /> Aujourd'hui
+        </button>
       </div>
 
       {loading ? (
