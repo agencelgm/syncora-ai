@@ -14,6 +14,7 @@ import QuickRevenueEntry from '@/components/today/QuickRevenueEntry';
 
 export default function Today() {
   const [tasks, setTasks] = useState([]);
+  const [completedToday, setCompletedToday] = useState(0);
   const [profile, setProfile] = useState(null);
   const [objectives, setObjectives] = useState([]);
   const [todayRevenue, setTodayRevenue] = useState(0);
@@ -26,13 +27,15 @@ export default function Today() {
 
   const loadData = async () => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    const [allTasks, profileData, objData, revData] = await Promise.all([
+    const [allTasks, doneTasks, profileData, objData, revData] = await Promise.all([
       base44.entities.Task.filter({ status: 'todo' }, '-ai_priority_score', 10),
+      base44.entities.Task.filter({ status: 'done' }, '-completed_at', 50),
       base44.entities.UserProfile.list('-created_date', 1),
       base44.entities.Objective.filter({ status: 'active' }, '-created_date', 3),
       base44.entities.RevenueEntry.filter({ date: today }, '-created_date', 20),
     ]);
     setTasks(allTasks);
+    setCompletedToday(doneTasks.filter(t => t.completed_at?.startsWith(today)).length);
     setProfile(profileData[0] || null);
     setObjectives(objData);
     setTodayRevenue(revData.reduce((sum, r) => sum + (r.amount_fcfa || 0), 0));
@@ -46,10 +49,10 @@ export default function Today() {
     });
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 }, colors: ['#F5A623', '#3B82F6', '#10B981'] });
     setTasks(prev => prev.filter(t => t.id !== task.id));
+    setCompletedToday(c => c + 1);
   };
 
   const todayTasks = tasks.slice(0, 5);
-  const completedToday = tasks.filter(t => t.status === 'done').length;
 
   if (loading) {
     return (
