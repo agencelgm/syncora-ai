@@ -2,19 +2,9 @@
   "name": "ExternalSyncRun",
   "type": "object",
   "properties": {
-    "providers": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "period_start": {
+    "target_user_email": {
       "type": "string",
-      "format": "date"
-    },
-    "period_end": {
-      "type": "string",
-      "format": "date"
+      "description": "Email de l'utilisateur cible de la sync"
     },
     "status": {
       "type": "string",
@@ -23,47 +13,37 @@
         "partial",
         "error"
       ],
-      "default": "success"
+      "description": "Statut de la synchronisation"
     },
-    "target_user_email": {
-      "type": "string"
+    "period_start": {
+      "type": "string",
+      "format": "date",
+      "description": "D\u00e9but de la p\u00e9riode synchronis\u00e9e"
     },
-    "target_user_id": {
-      "type": "string"
-    },
-    "total_imported": {
-      "type": "number",
-      "default": 0
-    },
-    "total_skipped": {
-      "type": "number",
-      "default": 0
-    },
-    "total_failed": {
-      "type": "number",
-      "default": 0
+    "period_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Fin de la p\u00e9riode synchronis\u00e9e"
     },
     "total_fcfa": {
       "type": "number",
-      "default": 0
+      "description": "Montant total synchronis\u00e9 en FCFA"
     },
-    "kpis": {
-      "type": "object"
+    "total_imported": {
+      "type": "number",
+      "description": "Nombre de nouvelles entr\u00e9es import\u00e9es"
+    },
+    "total_skipped": {
+      "type": "number",
+      "description": "Nombre de doublons ignor\u00e9s"
     },
     "errors": {
       "type": "array",
       "items": {
         "type": "string"
-      }
-    },
-    "triggered_by": {
-      "type": "string",
-      "default": "manual"
+      },
+      "description": "Liste des erreurs rencontr\u00e9es"
     }
   },
-  "required": [
-    "period_start",
-    "period_end",
-    "status"
-  ]
+  "required": []
 }
