@@ -16,7 +16,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative">
-      <div className="flex-1 overflow-y-auto pb-24" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="flex-1 overflow-y-auto pb-24" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
         <Outlet />
       </div>
       <nav
