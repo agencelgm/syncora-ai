@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { X, Zap, Loader2 } from 'lucide-react';
@@ -6,6 +6,10 @@ import { X, Zap, Loader2 } from 'lucide-react';
 export default function DailyBriefing({ open, onClose, tasks, objectives }) {
   const [briefing, setBriefing] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && !briefing && !loading) generate();
+  }, [open]);
 
   const generate = async () => {
     if (briefing) return;
@@ -26,23 +30,19 @@ Sois direct, énergique, sans fioritures. Style: commande, pas suggestion.`,
     setLoading(false);
   };
 
-  const handleOpen = () => {
-    generate();
-  };
-
   return (
     <AnimatePresence>
       {open && (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-end"
           onClick={onClose}
         >
           <motion.div
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25 }}
-            className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border"
-            onClick={e => { e.stopPropagation(); if (!briefing) handleOpen(); }}
+            className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border max-h-[calc(100vh-80px)] overflow-y-auto pb-8"
+            onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
