@@ -5,6 +5,7 @@ import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, Bell, Database,
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import IntegrationSection from '@/components/settings/IntegrationSection';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
+import { readFunctionError, unwrapFunctionResponse } from '@/lib/functionResponse';
 
 const SKILL_SUGGESTIONS = ['Coaching', 'Marketing digital', 'Vente', 'Copywriting', 'Formation', 'Consulting', 'Design', 'Développement', 'Finance', 'E-commerce'];
 const DOMAIN_SUGGESTIONS = ['Business', 'Santé', 'Tech', 'Éducation', 'Immobilier', 'Mode', 'Food', 'Voyage', 'Personnel'];
@@ -80,11 +81,11 @@ export default function Settings() {
 
     try {
       const { periodStart, periodEnd } = currentMonthRange();
-      const result = await base44.functions.invoke('syncExternalRevenue', {
+      const result = unwrapFunctionResponse(await base44.functions.invoke('syncExternalRevenue', {
         periodStart,
         periodEnd,
         providers: ['gohighlevel', 'chariow'],
-      });
+      }));
       if (!result.success) {
         setSyncError(result.errors?.join(' ') || result.error || result.message || 'La synchronisation a echoue.');
       } else {
@@ -549,6 +550,5 @@ function currentMonthRange() {
 }
 
 function readError(err) {
-  const data = err?.data || err?.response?.data;
-  return data?.message || data?.error || err?.message || 'La synchronisation a echoue.';
+  return readFunctionError(err, 'syncExternalRevenue') || 'La synchronisation a echoue.';
 }

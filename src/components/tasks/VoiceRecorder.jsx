@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, Mic, Square, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { unwrapFunctionResponse } from '@/lib/functionResponse';
 
 export default function VoiceRecorder({ onTasksExtracted, onClose }) {
   const [recording, setRecording] = useState(false);
@@ -54,10 +55,10 @@ export default function VoiceRecorder({ onTasksExtracted, onClose }) {
     setProcessing(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const response = await base44.functions.invoke('transcribeAndExtractTasks', { audio_url: file_url });
-      
-      if (response.data.tasks && response.data.tasks.length > 0) {
-        await onTasksExtracted(response.data.tasks);
+      const response = unwrapFunctionResponse(await base44.functions.invoke('transcribeAndExtractTasks', { audio_url: file_url }));
+
+      if (response.tasks && response.tasks.length > 0) {
+        await onTasksExtracted(response.tasks);
         onClose();
       } else {
         alert('Aucune tâche détectée. Essaie avec plus de détails.');

@@ -6,6 +6,7 @@ import ChatMessage from '@/components/coach/ChatMessage';
 import ImageCapture from '@/components/coach/ImageCapture';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
 import { asObject } from '@/lib/llm';
+import { readFunctionError, unwrapFunctionResponse } from '@/lib/functionResponse';
 
 export default function Coach() {
   const [messages, setMessages] = useState([]);
@@ -67,10 +68,10 @@ export default function Coach() {
       setMessages(prev => [...prev, userMsg]);
       setInput('');
 
-      const result = asObject(await base44.functions.invoke('agentCommand', {
+      const result = asObject(unwrapFunctionResponse(await base44.functions.invoke('agentCommand', {
         message: cleanText || "Analyse cette image et dis-moi quoi faire.",
         source,
-      }));
+      })));
 
       const assistantMsg = await saveAgentResponse(result);
       setMessages(prev => [...prev, assistantMsg]);
@@ -116,9 +117,9 @@ export default function Coach() {
 
     setActionLoadingId(message.agent_action_id);
     try {
-      const result = asObject(await base44.functions.invoke('agentCommand', {
+      const result = asObject(unwrapFunctionResponse(await base44.functions.invoke('agentCommand', {
         confirmActionId: message.agent_action_id,
-      }));
+      })));
 
       const success = result.type === 'executed';
       const patch = {
@@ -335,6 +336,5 @@ function fallbackContent(result) {
 }
 
 function errorMessage(err) {
-  const data = err?.data || err?.response?.data;
-  return data?.message || data?.error || err?.message || "Je n'ai pas reussi a traiter ce message pour l'instant.";
+  return readFunctionError(err, 'agentCommand') || "Je n'ai pas reussi a traiter ce message pour l'instant.";
 }
