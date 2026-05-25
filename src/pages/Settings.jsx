@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, ChevronRight, Bell } from 'lucide-react';
+import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, Bell } from 'lucide-react';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
 
@@ -321,20 +321,24 @@ export default function Settings() {
               <div className="w-9 h-9 bg-green-500/10 rounded-xl flex items-center justify-center">
                 <MessageCircle size={18} className="text-green-500" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-foreground text-sm">WhatsApp</p>
-                <p className="text-xs text-muted-foreground">Reçois ton briefing et ajoute des tâches par message</p>
+                <p className="text-xs text-muted-foreground">Connexion en préparation</p>
               </div>
+              <span className="text-[10px] font-bold uppercase bg-muted text-muted-foreground rounded-full px-2 py-1">
+                À venir
+              </span>
             </div>
             <input
               type="tel"
-              placeholder="+237 6XX XXX XXX"
+              placeholder="Activation bientôt disponible"
               value={form.whatsapp_number}
-              onChange={e => setForm(p => ({ ...p, whatsapp_number: e.target.value }))}
-              className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-gold/50 mb-2"
+              disabled
+              readOnly
+              className="w-full bg-muted/50 rounded-xl px-4 py-3 text-muted-foreground placeholder:text-muted-foreground text-sm outline-none border border-border mb-2"
             />
             <p className="text-xs text-muted-foreground">
-              💡 Une fois ton numéro sauvegardé, demande à ton coach IA comment activer la connexion WhatsApp.
+              On garde cette section prête, mais elle restera inactive tant que la connexion WhatsApp officielle n'est pas branchée.
             </p>
           </div>
 
@@ -384,7 +388,7 @@ export default function Settings() {
           {/* Info */}
           <div className="bg-muted/30 rounded-2xl p-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              🔒 Tes données restent privées. Les connexions externes (WhatsApp, email) te permettent de recevoir des résumés et d'interagir avec ton coach sans ouvrir l'app.
+              🔒 Tes données restent privées. Les connexions actives te permettent de recevoir des résumés sans ouvrir l'app; WhatsApp sera ajouté plus tard.
             </p>
           </div>
 

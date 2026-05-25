@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { X, Zap, Loader2 } from 'lucide-react';
+import { asText } from '@/lib/llm';
 
 export default function DailyBriefing({ open, onClose, tasks, objectives }) {
   const [briefing, setBriefing] = useState('');
@@ -14,20 +15,33 @@ export default function DailyBriefing({ open, onClose, tasks, objectives }) {
   const generate = async () => {
     if (briefing) return;
     setLoading(true);
-    const topTasks = tasks.slice(0, 5).map((t, i) => `${i + 1}. [${t.priority}] ${t.title}${t.defer_count > 0 ? ` (reportée ${t.defer_count}x)` : ''}`).join('\n');
-    const obj = objectives[0] ? `Objectif principal : ${objectives[0].title} (${objectives[0].current_amount_fcfa?.toLocaleString() || 0} / ${objectives[0].target_amount_fcfa?.toLocaleString()} FCFA)` : '';
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Tu es un coach entre Alex Hormozi et Tony Robbins. Génère un briefing matinal percutant, court (150 mots max), en français. Commence par une phrase de motivation incisive, puis liste les 3 priorités absolues du jour avec une raison stratégique pour chacune. Termine par un défi du jour.
-      
-Tâches disponibles:
+
+    try {
+      const topTasks = tasks
+        .slice(0, 5)
+        .map((t, i) => `${i + 1}. [${t.priority}] ${t.title}${t.defer_count > 0 ? ` (reportee ${t.defer_count}x)` : ''}`)
+        .join('\n');
+      const obj = objectives[0]
+        ? `Objectif principal : ${objectives[0].title} (${objectives[0].current_amount_fcfa?.toLocaleString() || 0} / ${objectives[0].target_amount_fcfa?.toLocaleString()} FCFA)`
+        : '';
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Tu es un coach entre Alex Hormozi et Tony Robbins. Genere un briefing matinal percutant, court (150 mots max), en francais. Commence par une phrase de motivation incisive, puis liste les 3 priorites absolues du jour avec une raison strategique pour chacune. Termine par un defi du jour.
+
+Taches disponibles:
 ${topTasks}
 
 ${obj}
 
-Sois direct, énergique, sans fioritures. Style: commande, pas suggestion.`,
-    });
-    setBriefing(result);
-    setLoading(false);
+Sois direct, energique, sans fioritures. Style: commande, pas suggestion.`,
+      });
+
+      setBriefing(asText(result, "Impossible de generer le briefing pour l'instant."));
+    } catch (err) {
+      setBriefing("Impossible de generer le briefing pour l'instant. Reessaie dans quelques instants.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +68,7 @@ Sois direct, énergique, sans fioritures. Style: commande, pas suggestion.`,
             {loading ? (
               <div className="flex items-center justify-center py-10 gap-3 text-gold">
                 <Loader2 size={20} className="animate-spin" />
-                <span className="text-sm">Ton coach prépare le briefing...</span>
+                <span className="text-sm">Ton coach prepare le briefing...</span>
               </div>
             ) : (
               <p className="text-foreground/90 leading-relaxed whitespace-pre-line text-sm">{briefing}</p>

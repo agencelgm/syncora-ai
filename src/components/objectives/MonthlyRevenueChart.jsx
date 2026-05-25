@@ -1,4 +1,4 @@
-import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import { subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';

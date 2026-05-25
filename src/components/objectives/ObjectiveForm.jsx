@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Wand2, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { asText } from '@/lib/llm';
 
 const CATEGORIES = [
   { key: 'financial', label: '💰 Finance' },
@@ -27,11 +28,16 @@ export default function ObjectiveForm({ objective, onSave, onClose }) {
   const generateStrategy = async () => {
     if (!form.title) return;
     setAiLoading(true);
+    try {
     const result = await base44.integrations.Core.InvokeLLM({
       prompt: `Coach style Hormozi+Robbins. Pour l'objectif "${form.title}" ${form.target_amount_fcfa ? `(cible: ${form.target_amount_fcfa} FCFA)` : ''}, génère une stratégie en 2-3 phrases courtes et percutantes. Sois concret et actionnable. Max 80 mots.`,
     });
-    setForm(p => ({ ...p, ai_strategy: result }));
-    setAiLoading(false);
+    setForm(p => ({ ...p, ai_strategy: asText(result, '') }));
+    } catch (err) {
+      setForm(p => ({ ...p, ai_strategy: "Strategie indisponible pour l'instant. Reessaie plus tard." }));
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSubmit = () => {

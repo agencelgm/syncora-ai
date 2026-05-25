@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, RotateCcw, Trash2, Pencil, AlertTriangle, Zap, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, RotateCcw, Trash2, Pencil } from 'lucide-react';
 
 const priorityConfig = {
   critical: { color: 'text-red-400', dot: 'bg-red-400', label: 'Critique' },

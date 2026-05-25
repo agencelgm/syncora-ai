@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Circle, Flame, TrendingUp, Zap, ChevronRight, Plus } from 'lucide-react';
+import { CheckCircle2, Flame, TrendingUp, Zap, ChevronRight, Plus } from 'lucide-react';
 import { format, isToday as isDateToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import confetti from 'canvas-confetti';
@@ -34,7 +34,7 @@ export default function Today() {
     const user = await getCurrentUser();
     const uid = user?.id;
     const [allTasks, doneTasks, profileData, objData, revData] = await Promise.all([
-      base44.entities.Task.filter({ status: 'todo', created_by_id: uid }, '-ai_priority_score', 10),
+      base44.entities.Task.filter({ status: 'todo', created_by_id: uid }, '-ai_priority_score', 200),
       base44.entities.Task.filter({ status: 'done', created_by_id: uid }, '-completed_at', 50),
       base44.entities.UserProfile.filter({ created_by_id: uid }, '-created_date', 1),
       base44.entities.Objective.filter({ status: 'active', created_by_id: uid }, '-created_date', 3),
@@ -61,9 +61,12 @@ export default function Today() {
 
   const isSelectedToday = isDateToday(selectedDate);
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const todayTasks = isSelectedToday
-    ? tasks.slice(0, 5)
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const selectedTasks = isSelectedToday
+    ? tasks.filter(t => !t.due_date || t.due_date === todayStr)
     : tasks.filter(t => t.due_date === selectedDateStr);
+  const visibleTasks = isSelectedToday ? selectedTasks.slice(0, 5) : selectedTasks;
+  const remainingTaskCount = selectedTasks.length;
 
   if (loading) {
     return (
@@ -89,10 +92,12 @@ export default function Today() {
 
       {/* Progress summary */}
       <div className="bg-card rounded-2xl p-4 mb-5 border border-border flex items-center gap-4">
-        <ProgressRing total={todayTasks.length + completedToday} done={completedToday} />
+        <ProgressRing total={remainingTaskCount + completedToday} done={completedToday} />
         <div className="flex-1">
           <p className="text-foreground font-semibold">{completedToday} tâches accomplies</p>
-          <p className="text-muted-foreground text-sm">{todayTasks.length} restantes aujourd'hui</p>
+          <p className="text-muted-foreground text-sm">
+            {remainingTaskCount} {isSelectedToday ? "restantes aujourd'hui" : 'pour cette date'}
+          </p>
           {objectives[0] && (
             <div className="mt-2 flex items-center gap-1 text-gold text-xs font-medium">
               <TrendingUp size={12} />
@@ -124,7 +129,7 @@ export default function Today() {
 
       <div className="space-y-3">
         <AnimatePresence>
-          {todayTasks.length === 0 ? (
+          {visibleTasks.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="text-center py-10 text-muted-foreground"
@@ -134,7 +139,7 @@ export default function Today() {
               <p className="text-sm">Tu écrases la journée.</p>
             </motion.div>
           ) : (
-            todayTasks.map((task, i) => (
+            visibleTasks.map((task, i) => (
               <TodayTaskCard key={task.id} task={task} index={i} onComplete={() => completeTask(task)} />
             ))
           )}
@@ -162,7 +167,7 @@ export default function Today() {
         <QuickRevenueEntry onAdded={loadData} />
       </div>
 
-      <DailyBriefing open={briefingOpen} onClose={() => setBriefingOpen(false)} tasks={tasks} objectives={objectives} />
+      <DailyBriefing open={briefingOpen} onClose={() => setBriefingOpen(false)} tasks={selectedTasks} objectives={objectives} />
     </div>
     </PullToRefresh>
   );

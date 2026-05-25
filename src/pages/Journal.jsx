@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, Smile, Frown, Meh, Battery, Zap, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
+import { asObject, asStringArray } from '@/lib/llm';
 
 const MOODS = [
   { key: 'excellent', icon: '🚀', label: 'Excellent' },
@@ -20,6 +21,7 @@ export default function Journal() {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
     content: '',
@@ -47,7 +49,10 @@ export default function Journal() {
   const analyzeAndSave = async () => {
     if (!form.content && form.wins.length === 0) return;
     setAnalyzing(true);
-    const result = await base44.integrations.Core.InvokeLLM({
+    setError('');
+
+    try {
+    const result = asObject(await base44.integrations.Core.InvokeLLM({
       prompt: `Coach IA (style Hormozi+Robbins). Analyse cette entrée de journal et génère :
 1. ai_insights: bilan percutant + 1 leçon clé + encouragement (max 80 mots)
 2. tasks_to_create: array de 2-3 titres de tâches concrètes générées par cette entrée
@@ -64,10 +69,10 @@ Revenus: ${form.revenue_today_fcfa || 0} FCFA`,
           tasks_to_create: { type: 'array', items: { type: 'string' } },
         },
       },
-    });
+    }));
 
     const tasksCreated = [];
-    for (const title of (result.tasks_to_create || [])) {
+    for (const title of asStringArray(result.tasks_to_create).slice(0, 3)) {
       const t = await base44.entities.Task.create({
         title,
         source: 'journal',
@@ -80,14 +85,18 @@ Revenus: ${form.revenue_today_fcfa || 0} FCFA`,
     await base44.entities.JournalEntry.create({
       ...form,
       revenue_today_fcfa: Number(form.revenue_today_fcfa) || 0,
-      ai_insights: result.ai_insights,
+      ai_insights: typeof result.ai_insights === 'string' ? result.ai_insights : '',
       tasks_generated: tasksCreated,
     });
 
     setForm({ date: format(new Date(), 'yyyy-MM-dd'), content: '', mood: 'good', revenue_today_fcfa: '', wins: [] });
     setShowForm(false);
-    setAnalyzing(false);
     loadEntries();
+    } catch (err) {
+      setError("Impossible d'analyser cette entree pour l'instant. Reessaie dans quelques instants.");
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   return (
@@ -158,6 +167,10 @@ Revenus: ${form.revenue_today_fcfa || 0} FCFA`,
               onChange={e => setForm(p => ({ ...p, revenue_today_fcfa: e.target.value }))}
               className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground placeholder:text-muted-foreground text-sm mb-4 outline-none border border-transparent focus:border-gold/50"
             />
+
+            {error && (
+              <p className="text-xs text-destructive mb-3">{error}</p>
+            )}
 
             <div className="flex gap-3">
               <button onClick={() => setShowForm(false)} className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm">Annuler</button>

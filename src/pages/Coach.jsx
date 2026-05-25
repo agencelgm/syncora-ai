@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Image, Loader2, Wand2, CheckCircle2 } from 'lucide-react';
+import { Send, Image, Loader2, Wand2 } from 'lucide-react';
 import ChatMessage from '@/components/coach/ChatMessage';
 import ImageCapture from '@/components/coach/ImageCapture';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
+import { asObject, asStringArray } from '@/lib/llm';
 
 export default function Coach() {
   const [messages, setMessages] = useState([]);
@@ -50,6 +51,7 @@ export default function Coach() {
     if (!text.trim() && !imageUrl) return;
     setLoading(true);
 
+    try {
     const userMsg = await base44.entities.ChatMessage.create({
       role: 'user',
       content: text || '[Image envoyée]',
@@ -68,7 +70,7 @@ export default function Coach() {
       ? `Profil: ${profile.full_name || 'Utilisateur'}, compétences: ${profile.skills?.join(', ') || 'non précisées'}, objectif revenus: ${profile.target_monthly_revenue_fcfa?.toLocaleString() || '?'} FCFA/mois.`
       : '';
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    const result = asObject(await base44.integrations.Core.InvokeLLM({
       prompt: `Tu es un coach IA personnel entre Alex Hormozi (pragmatique, ROI, exécution) et Tony Robbins (énergie, petites victoires, effet boule de neige). Tu parles en français. Tu es direct, énergique, actionnable.
 
 ${profileCtx}
@@ -87,10 +89,10 @@ Si pertinent, propose des tâches à créer en listant task_titles (max 3).`,
         },
       },
       file_urls: imageUrl ? [imageUrl] : undefined,
-    });
+    }));
 
     const tasksCreated = [];
-    for (const title of (result.task_titles || [])) {
+    for (const title of asStringArray(result.task_titles).slice(0, 3)) {
       const t = await base44.entities.Task.create({
         title,
         source: 'ai_chat',
@@ -102,12 +104,28 @@ Si pertinent, propose des tâches à créer en listant task_titles (max 3).`,
 
     const assistantMsg = await base44.entities.ChatMessage.create({
       role: 'assistant',
-      content: result.message,
+      content: typeof result.message === 'string' && result.message.trim()
+        ? result.message
+        : "Je n'ai pas reussi a generer une reponse fiable. Reformule-moi ca et je reprends.",
       tasks_created: tasksCreated,
       channel: 'in_app',
     });
     setMessages(prev => [...prev, assistantMsg]);
-    setLoading(false);
+    } catch (err) {
+      const fallback = {
+        role: 'assistant',
+        content: "Je n'ai pas reussi a traiter ce message pour l'instant. Reessaie dans quelques instants.",
+        channel: 'in_app',
+      };
+      try {
+        const saved = await base44.entities.ChatMessage.create(fallback);
+        setMessages(prev => [...prev, saved]);
+      } catch {
+        setMessages(prev => [...prev, { ...fallback, id: `local-${Date.now()}` }]);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleImageProcessed = async (imageUrl, extractedText) => {

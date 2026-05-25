@@ -2,33 +2,48 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, AlertTriangle, X, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function DeleteAccountSection() {
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const deleteAccount = async () => {
     setLoading(true);
-    // Supprime toutes les données utilisateur
-    const [tasks, revenues, objectives, journals, chats, profiles] = await Promise.all([
-      base44.entities.Task.list('-created_date', 500),
-      base44.entities.RevenueEntry.list('-created_date', 500),
-      base44.entities.Objective.list('-created_date', 100),
-      base44.entities.JournalEntry.list('-created_date', 500),
-      base44.entities.ChatMessage.list('-created_date', 500),
-      base44.entities.UserProfile.list('-created_date', 10),
-    ]);
-    const all = [
-      ...tasks.map(t => base44.entities.Task.delete(t.id)),
-      ...revenues.map(r => base44.entities.RevenueEntry.delete(r.id)),
-      ...objectives.map(o => base44.entities.Objective.delete(o.id)),
-      ...journals.map(j => base44.entities.JournalEntry.delete(j.id)),
-      ...chats.map(c => base44.entities.ChatMessage.delete(c.id)),
-      ...profiles.map(p => base44.entities.UserProfile.delete(p.id)),
-    ];
-    await Promise.all(all);
-    await base44.auth.logout();
+    setError('');
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      setError("Impossible d'identifier le compte connecte.");
+      setLoading(false);
+      return;
+    }
+    const scope = { created_by_id: user.id };
+    try {
+      // Supprime uniquement les données du compte connecté.
+      const [tasks, revenues, objectives, journals, chats, profiles] = await Promise.all([
+        base44.entities.Task.filter(scope, '-created_date', 500),
+        base44.entities.RevenueEntry.filter(scope, '-created_date', 500),
+        base44.entities.Objective.filter(scope, '-created_date', 100),
+        base44.entities.JournalEntry.filter(scope, '-created_date', 500),
+        base44.entities.ChatMessage.filter(scope, '-created_date', 500),
+        base44.entities.UserProfile.filter(scope, '-created_date', 10),
+      ]);
+      const all = [
+        ...tasks.map(t => base44.entities.Task.delete(t.id)),
+        ...revenues.map(r => base44.entities.RevenueEntry.delete(r.id)),
+        ...objectives.map(o => base44.entities.Objective.delete(o.id)),
+        ...journals.map(j => base44.entities.JournalEntry.delete(j.id)),
+        ...chats.map(c => base44.entities.ChatMessage.delete(c.id)),
+        ...profiles.map(p => base44.entities.UserProfile.delete(p.id)),
+      ];
+      await Promise.all(all);
+      await base44.auth.logout();
+    } catch (err) {
+      setError("Impossible de supprimer le compte pour l'instant. Reessaie dans quelques instants.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,6 +104,10 @@ export default function DeleteAccountSection() {
                 disabled={loading}
                 className="w-full bg-muted rounded-xl px-4 py-3 text-foreground text-sm outline-none border border-transparent focus:border-destructive/50 mb-4"
               />
+
+              {error && (
+                <p className="text-xs text-destructive mb-3">{error}</p>
+              )}
 
               <div className="flex gap-2">
                 <button

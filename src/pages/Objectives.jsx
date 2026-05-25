@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { motion } from 'framer-motion';
-import { Target, Plus, TrendingUp, TrendingDown, Zap, ChevronRight, DollarSign, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import ObjectiveCard from '@/components/objectives/ObjectiveCard';
 import ObjectiveForm from '@/components/objectives/ObjectiveForm';
 import RevenueTracker from '@/components/objectives/RevenueTracker';
@@ -17,18 +16,22 @@ export default function Objectives() {
   const [selectedObj, setSelectedObj] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('objectives');
+  const [allRevenues, setAllRevenues] = useState([]);
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
+    setLoading(true);
     const user = await getCurrentUser();
     const uid = user?.id;
-    const [objs, revs] = await Promise.all([
+    const [objs, revs, fullRevs] = await Promise.all([
       base44.entities.Objective.filter({ created_by_id: uid }, '-created_date', 20),
       base44.entities.RevenueEntry.filter({ created_by_id: uid }, '-date', 30),
+      base44.entities.RevenueEntry.filter({ created_by_id: uid }, '-date', 500),
     ]);
     setObjectives(objs);
     setRevenues(revs);
+    setAllRevenues(fullRevs);
     setLoading(false);
   };
 
@@ -43,14 +46,7 @@ export default function Objectives() {
     loadData();
   };
 
-  // Récupère TOUS les revenus pour le graphique (les 6 derniers mois) — filtré par utilisateur
-  const [allRevenues, setAllRevenues] = useState([]);
-  useEffect(() => {
-    getCurrentUser().then(user => {
-      base44.entities.RevenueEntry.filter({ created_by_id: user?.id }, '-date', 500).then(setAllRevenues);
-    });
-  }, [revenues]);
-
+  // Les revenus complets alimentent le graphique, l'historique et la progression des objectifs.
   const thisMonthRevenue = revenues
     .filter(r => r.date?.startsWith(new Date().toISOString().slice(0, 7)))
     .reduce((sum, r) => sum + (r.amount_fcfa || 0), 0);
@@ -59,6 +55,20 @@ export default function Objectives() {
   const monthlyTarget = mainObjective?.target_amount_fcfa
     ? Math.round(mainObjective.target_amount_fcfa / 12)
     : 0;
+
+  const getObjectiveRevenueProgress = (objective) => {
+    const linkedRevenue = allRevenues
+      .filter(r => r.objective_id === objective.id)
+      .reduce((sum, r) => sum + (Number(r.amount_fcfa) || 0), 0);
+
+    if (linkedRevenue > 0) return linkedRevenue;
+
+    if (objective.id === mainObjective?.id && objective.category === 'financial') {
+      return allRevenues.reduce((sum, r) => sum + (Number(r.amount_fcfa) || 0), 0);
+    }
+
+    return 0;
+  };
 
   return (
     <div className="px-4 pt-8 pb-4">
@@ -127,7 +137,7 @@ export default function Objectives() {
             <ObjectiveCard
               key={obj.id}
               objective={obj}
-              revenues={revenues}
+              revenueProgress={getObjectiveRevenueProgress(obj)}
               index={i}
               onEdit={() => { setSelectedObj(obj); setShowForm(true); }}
             />
@@ -142,7 +152,7 @@ export default function Objectives() {
           <RevenueTracker revenues={revenues} onRefresh={loadData} />
         </>
       ) : (
-        <HistoryView revenues={revenues} objectives={objectives} />
+        <HistoryView revenues={allRevenues} objectives={objectives} />
       )}
 
       {showForm && (

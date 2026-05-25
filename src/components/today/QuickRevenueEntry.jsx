@@ -4,6 +4,7 @@ import { DollarSign, Plus, X, CheckCircle2, Link2, ChevronRight } from 'lucide-r
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import TaskPickerDrawer from '@/components/objectives/TaskPickerDrawer';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function QuickRevenueEntry({ onAdded }) {
   const [open, setOpen] = useState(false);
@@ -16,7 +17,17 @@ export default function QuickRevenueEntry({ onAdded }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (open) base44.entities.Task.filter({ status: 'done' }, '-completed_at', 30).then(setTasks);
+    if (!open) return;
+
+    let cancelled = false;
+    getCurrentUser().then(user => {
+      if (!user?.id) return [];
+      return base44.entities.Task.filter({ status: 'done', created_by_id: user.id }, '-completed_at', 30);
+    }).then(data => {
+      if (!cancelled) setTasks(data || []);
+    });
+
+    return () => { cancelled = true; };
   }, [open]);
 
   const submit = async () => {

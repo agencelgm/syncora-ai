@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, Upload, Camera, Loader2, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { asObject } from '@/lib/llm';
 
 const TASK_PRIORITIES = ['critical', 'high', 'medium', 'low'];
 
@@ -27,8 +28,8 @@ const normalizeExtractedTasks = (tasks = []) => (
 
 export default function ImageCapture({
   mode = 'notes',
-  onProcessed,
-  onTasksExtracted,
+  onProcessed = null,
+  onTasksExtracted = null,
   onClose,
 }) {
   const [uploading, setUploading] = useState(false);
@@ -123,9 +124,10 @@ export default function ImageCapture({
     if (isBusy) return;
     setError('');
 
-    if ('showOpenFilePicker' in window) {
+    const anyWindow = /** @type {any} */ (window);
+    if (typeof anyWindow.showOpenFilePicker === 'function') {
       try {
-        const [handle] = await window.showOpenFilePicker({
+        const [handle] = await anyWindow.showOpenFilePicker({
           multiple: false,
           types: [{
             description: 'Images',
@@ -215,7 +217,7 @@ export default function ImageCapture({
 
     try {
       if (isTaskMode) {
-        const result = await base44.integrations.Core.InvokeLLM({
+        const result = asObject(await base44.integrations.Core.InvokeLLM({
           prompt: `Analyse cette image de notes manuscrites, cahier, tableau ou capture d'écran.
 Transforme le contenu en tâches concrètes et actionnables.
 Ne retourne pas seulement une transcription: crée des tâches prêtes à être ajoutées dans une todo list.
@@ -254,7 +256,7 @@ Pour chaque tâche:
               },
             },
           },
-        });
+        }));
 
         const extractedTasks = normalizeExtractedTasks(result?.tasks || []);
         if (extractedTasks.length === 0) {
@@ -266,7 +268,7 @@ Pour chaque tâche:
         return;
       }
 
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = asObject(await base44.integrations.Core.InvokeLLM({
         prompt: `Analyse cette image (photo de cahier, note manuscrite ou capture d'écran).
 Extrait et structure tout le contenu textuel.
 Identifie les tâches, actions, idées et notes.
@@ -281,11 +283,11 @@ Retourne en JSON:
             tasks: { type: 'array', items: { type: 'string' } },
           },
         },
-      });
+      }));
 
       onProcessed?.(
         fileUrl,
-        `Transcription:\n${result.transcription}\n\nTâches identifiées:\n${result.tasks?.map((t, i) => `${i + 1}. ${t}`).join('\n') || 'Aucune'}`
+        `Transcription:\n${typeof result.transcription === 'string' ? result.transcription : ''}\n\nTâches identifiées:\n${Array.isArray(result.tasks) ? result.tasks.map((t, i) => `${i + 1}. ${String(t)}`).join('\n') : 'Aucune'}`
       );
     } catch (err) {
       setError(isTaskMode

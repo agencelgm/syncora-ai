@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Target, Pencil, TrendingUp } from 'lucide-react';
+import { Pencil, TrendingUp } from 'lucide-react';
 
 const categoryColors = {
   financial: 'text-gold border-gold/30 bg-gold/10',
@@ -10,15 +10,16 @@ const categoryColors = {
   other: 'text-muted-foreground border-border bg-muted',
 };
 
-export default function ObjectiveCard({ objective, revenues, index, onEdit }) {
+export default function ObjectiveCard({ objective, revenueProgress = 0, index, onEdit }) {
+  const currentAmount = Math.max(Number(objective.current_amount_fcfa) || 0, Number(revenueProgress) || 0);
   const pct = objective.target_amount_fcfa > 0
-    ? Math.min(100, Math.round((objective.current_amount_fcfa || 0) / objective.target_amount_fcfa * 100))
+    ? Math.min(100, Math.round(currentAmount / objective.target_amount_fcfa * 100))
     : 0;
 
   const colors = categoryColors[objective.category] || categoryColors.other;
 
   const monthsLeft = objective.target_date
-    ? Math.max(0, Math.round((new Date(objective.target_date) - new Date()) / (1000 * 60 * 60 * 24 * 30)))
+    ? Math.max(0, Math.round((new Date(objective.target_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30)))
     : null;
 
   return (
@@ -49,7 +50,7 @@ export default function ObjectiveCard({ objective, revenues, index, onEdit }) {
         <>
           <div className="flex items-end justify-between mb-2">
             <p className="text-xl font-bold text-foreground">
-              {(objective.current_amount_fcfa || 0).toLocaleString()} FCFA
+              {currentAmount.toLocaleString()} FCFA
             </p>
             <p className="text-muted-foreground text-sm">
               / {objective.target_amount_fcfa.toLocaleString()}

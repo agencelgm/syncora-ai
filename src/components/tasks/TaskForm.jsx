@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wand2, Loader2, Camera } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import ImageCapture from '@/components/coach/ImageCapture';
+import { asObject } from '@/lib/llm';
 
 const PRIORITIES = ['critical', 'high', 'medium', 'low'];
 const PRIORITY_LABELS = { critical: 'Critique', high: 'Haute', medium: 'Moyenne', low: 'Faible' };
@@ -36,7 +37,8 @@ export default function TaskForm({ task, onSave, onClose, onCreateTasks }) {
   const enrichWithAI = async () => {
     if (!form.title) return;
     setAiLoading(true);
-    const result = await base44.integrations.Core.InvokeLLM({
+    try {
+    const result = asObject(await base44.integrations.Core.InvokeLLM({
       prompt: `Pour une tâche intitulée "${form.title}", génère en JSON :
 - priority: "critical"|"high"|"medium"|"low" 
 - ai_priority_score: 1-100
@@ -51,9 +53,11 @@ export default function TaskForm({ task, onSave, onClose, onCreateTasks }) {
           estimated_value_fcfa: { type: 'number' },
         },
       },
-    });
+    }));
     setForm(prev => ({ ...prev, ...result }));
-    setAiLoading(false);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSubmit = () => {
