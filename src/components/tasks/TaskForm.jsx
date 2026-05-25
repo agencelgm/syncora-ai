@@ -70,7 +70,7 @@ export default function TaskForm({ task, onSave, onClose }) {
         ref={scrollRef}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border max-h-[65dvh] overflow-y-auto"
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
       <div className="px-4 pt-3" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
