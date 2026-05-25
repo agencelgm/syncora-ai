@@ -126,6 +126,9 @@ async function executeConfirmedAction(base44: any, caller: any, actionId: string
         providers: action.payload?.providers,
         triggeredBy: 'agent',
       }, { caller });
+      if (!result.success) {
+        throw new Error(result.errors?.join(' ') || 'La synchronisation a echoue.');
+      }
     } else {
       throw new Error('Type d action inconnu.');
     }

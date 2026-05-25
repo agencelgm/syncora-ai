@@ -22,7 +22,7 @@ export default function DeleteAccountSection() {
     const scope = { created_by_id: user.id };
     try {
       // Supprime uniquement les données du compte connecté.
-      const [tasks, revenues, objectives, journals, chats, profiles, syncRuns, agentActions] = await Promise.all([
+      const [tasks, revenues, objectives, journals, chats, profiles, syncRuns, agentActions, integrations] = await Promise.all([
         base44.entities.Task.filter(scope, '-created_date', 500),
         base44.entities.RevenueEntry.filter(scope, '-created_date', 500),
         base44.entities.Objective.filter(scope, '-created_date', 100),
@@ -31,6 +31,7 @@ export default function DeleteAccountSection() {
         base44.entities.UserProfile.filter(scope, '-created_date', 10),
         base44.entities.ExternalSyncRun.filter(scope, '-created_date', 100),
         base44.entities.AgentAction.filter(scope, '-created_date', 100),
+        base44.entities.IntegrationAccount.filter(scope, '-created_date', 100),
       ]);
       const all = [
         ...tasks.map(t => base44.entities.Task.delete(t.id)),
@@ -41,6 +42,7 @@ export default function DeleteAccountSection() {
         ...profiles.map(p => base44.entities.UserProfile.delete(p.id)),
         ...syncRuns.map(s => base44.entities.ExternalSyncRun.delete(s.id)),
         ...agentActions.map(a => base44.entities.AgentAction.delete(a.id)),
+        ...integrations.map(i => base44.entities.IntegrationAccount.delete(i.id)),
       ];
       await Promise.all(all);
       await base44.auth.logout();

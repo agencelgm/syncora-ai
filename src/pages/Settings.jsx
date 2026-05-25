@@ -85,7 +85,11 @@ export default function Settings() {
         periodEnd,
         providers: ['gohighlevel', 'chariow'],
       });
-      setSyncSummary(result);
+      if (!result.success) {
+        setSyncError(result.errors?.join(' ') || result.error || result.message || 'La synchronisation a echoue.');
+      } else {
+        setSyncSummary(result);
+      }
       await loadSyncRuns();
     } catch (err) {
       setSyncError(readError(err));

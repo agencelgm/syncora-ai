@@ -46,6 +46,13 @@ type SyncStats = {
   totalFcfa: number;
 };
 
+type ProviderAccount = {
+  id?: string;
+  accountName: string;
+  apiKey: string;
+  locationId?: string;
+};
+
 export function getCurrentMonthPeriod(now = new Date()) {
   return {
     periodStart: `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`,
@@ -68,6 +75,7 @@ export async function runExternalRevenueSync(base44: any, request: SyncRequest =
 
   const providers = normalizeProviders(request.providers);
   const targetUser = await findTargetUser(base44);
+  const providerAccounts = await loadProviderAccounts(base44, targetUser.id);
   const existingKeys = await getExistingExternalKeys(base44, targetUser.id);
   const importedAt = new Date().toISOString();
   const providerStats: Record<string, SyncStats> = {};
@@ -79,7 +87,7 @@ export async function runExternalRevenueSync(base44: any, request: SyncRequest =
 
     let records: ExternalRevenueRecord[] = [];
     try {
-      records = await fetchProviderRecords(provider, periodStart, periodEnd);
+      records = await fetchProviderRecords(provider, periodStart, periodEnd, providerAccounts[provider] || []);
     } catch (error) {
       providerStats[provider].failed += 1;
       errors.push(`${PROVIDER_LABELS[provider]}: ${messageFromError(error)}`);
@@ -191,6 +199,46 @@ async function getExistingExternalKeys(base44: any, userId: string) {
   );
 }
 
+async function loadProviderAccounts(base44: any, userId: string) {
+  const byProvider: Record<string, ProviderAccount[]> = {
+    gohighlevel: [],
+    chariow: [],
+  };
+
+  try {
+    const accounts = await base44.asServiceRole.entities.IntegrationAccount.filter({ created_by_id: userId }, '-created_date', 100);
+    for (const account of accounts) {
+      const provider = String(account.service || '').toLowerCase();
+      if (!VALID_PROVIDERS.includes(provider) || account.is_active === false || !account.api_key) continue;
+      byProvider[provider].push({
+        id: account.id,
+        accountName: account.account_name || PROVIDER_LABELS[provider],
+        apiKey: account.api_key,
+        locationId: account.location_id,
+      });
+    }
+  } catch {
+    // Les comptes connectes sont optionnels: on retombe sur les secrets serveur.
+  }
+
+  if (byProvider.gohighlevel.length === 0 && Deno.env.get('GHL_ACCESS_TOKEN')) {
+    byProvider.gohighlevel.push({
+      accountName: 'GoHighLevel',
+      apiKey: Deno.env.get('GHL_ACCESS_TOKEN') || '',
+      locationId: Deno.env.get('GHL_LOCATION_ID') || '',
+    });
+  }
+
+  if (byProvider.chariow.length === 0 && Deno.env.get('CHARIOW_API_KEY')) {
+    byProvider.chariow.push({
+      accountName: 'Chariow',
+      apiKey: Deno.env.get('CHARIOW_API_KEY') || '',
+    });
+  }
+
+  return byProvider;
+}
+
 function normalizeProviders(value?: string[]): SyncProvider[] {
   const providers = Array.isArray(value) && value.length > 0
     ? value.map(provider => String(provider || '').toLowerCase().trim())
@@ -203,18 +251,28 @@ function normalizeProviders(value?: string[]): SyncProvider[] {
   return Array.from(new Set(normalized));
 }
 
-async function fetchProviderRecords(provider: SyncProvider, periodStart: string, periodEnd: string) {
-  if (provider === 'gohighlevel') {
-    return fetchGoHighLevelRecords(periodStart, periodEnd);
+async function fetchProviderRecords(provider: SyncProvider, periodStart: string, periodEnd: string, accounts: ProviderAccount[]) {
+  if (!accounts.length) {
+    throw new SyncError(`Aucun compte ${PROVIDER_LABELS[provider]} connecte. Ajoute-le dans Parametres > API ou configure le secret serveur.`, 404);
   }
-  return fetchChariowRecords(periodStart, periodEnd);
+
+  const allRecords: ExternalRevenueRecord[] = [];
+  if (provider === 'gohighlevel') {
+    for (const account of accounts) {
+      allRecords.push(...await fetchGoHighLevelRecords(periodStart, periodEnd, account));
+    }
+    return allRecords;
+  }
+
+  for (const account of accounts) {
+    allRecords.push(...await fetchChariowRecords(periodStart, periodEnd, account));
+  }
+  return allRecords;
 }
 
-async function fetchGoHighLevelRecords(periodStart: string, periodEnd: string): Promise<ExternalRevenueRecord[]> {
-  const token = Deno.env.get('GHL_ACCESS_TOKEN');
-  const locationId = Deno.env.get('GHL_LOCATION_ID');
-  if (!token || !locationId) {
-    throw new SyncError('Secrets GHL_ACCESS_TOKEN ou GHL_LOCATION_ID manquants.', 500);
+async function fetchGoHighLevelRecords(periodStart: string, periodEnd: string, account: ProviderAccount): Promise<ExternalRevenueRecord[]> {
+  if (!account.apiKey || !account.locationId) {
+    throw new SyncError(`Compte GoHighLevel "${account.accountName}": token ou Location ID manquant.`, 404);
   }
 
   const baseUrl = Deno.env.get('GHL_API_BASE_URL') || 'https://services.leadconnectorhq.com';
@@ -228,19 +286,19 @@ async function fetchGoHighLevelRecords(periodStart: string, periodEnd: string): 
 
   const payload = await fetchJson(url.toString(), {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${account.apiKey}`,
       Accept: 'application/json',
       Version: apiVersion,
     },
   }, 'GoHighLevel');
 
   return extractList(payload)
-    .map((item: any, index: number) => normalizeGoHighLevelTransaction(item, index))
+    .map((item: any, index: number) => normalizeGoHighLevelTransaction(item, index, account))
     .filter(Boolean)
     .filter(record => isDateInsidePeriod(record!.date, periodStart, periodEnd)) as ExternalRevenueRecord[];
 }
 
-function normalizeGoHighLevelTransaction(item: any, index: number): ExternalRevenueRecord | null {
+function normalizeGoHighLevelTransaction(item: any, index: number, account: ProviderAccount): ExternalRevenueRecord | null {
   const status = pickString(item, ['status', 'paymentStatus', 'transactionStatus', 'chargeStatus']).toLowerCase();
   if (status && !PAID_STATUSES.has(status)) return null;
 
@@ -257,20 +315,19 @@ function normalizeGoHighLevelTransaction(item: any, index: number): ExternalReve
 
   return {
     provider: 'gohighlevel',
-    externalId,
+    externalId: `${account.id || account.locationId || account.accountName}:${externalId}`,
     status: status || 'paid',
     amount,
     currency,
     date,
-    label: customer ? `Paiement ${customer}` : 'Paiement GoHighLevel',
-    notes: `Import GoHighLevel - transaction ${externalId}`,
+    label: customer ? `Paiement ${customer}` : `Paiement ${account.accountName}`,
+    notes: `Import GoHighLevel (${account.accountName}) - transaction ${externalId}`,
   };
 }
 
-async function fetchChariowRecords(periodStart: string, periodEnd: string): Promise<ExternalRevenueRecord[]> {
-  const apiKey = Deno.env.get('CHARIOW_API_KEY');
-  if (!apiKey) {
-    throw new SyncError('Secret CHARIOW_API_KEY manquant.', 500);
+async function fetchChariowRecords(periodStart: string, periodEnd: string, account: ProviderAccount): Promise<ExternalRevenueRecord[]> {
+  if (!account.apiKey) {
+    throw new SyncError(`Compte Chariow "${account.accountName}": cle API manquante.`, 404);
   }
 
   const baseUrl = Deno.env.get('CHARIOW_API_BASE_URL') || 'https://api.chariow.com';
@@ -288,7 +345,7 @@ async function fetchChariowRecords(periodStart: string, periodEnd: string): Prom
 
       const payload = await fetchJson(url.toString(), {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${account.apiKey}`,
           Accept: 'application/json',
         },
       }, 'Chariow');
@@ -299,12 +356,12 @@ async function fetchChariowRecords(periodStart: string, periodEnd: string): Prom
   }
 
   return sales
-    .map((item: any, index: number) => normalizeChariowSale(item, index, periodEnd))
+    .map((item: any, index: number) => normalizeChariowSale(item, index, periodEnd, account))
     .filter(Boolean)
     .filter(record => isDateInsidePeriod(record!.date, periodStart, periodEnd)) as ExternalRevenueRecord[];
 }
 
-function normalizeChariowSale(item: any, index: number, fallbackDate: string): ExternalRevenueRecord | null {
+function normalizeChariowSale(item: any, index: number, fallbackDate: string, account: ProviderAccount): ExternalRevenueRecord | null {
   const status = pickString(item, ['status', 'payment_status', 'paymentStatus']).toLowerCase();
   if (status && !new Set(['completed', 'settled']).has(status)) return null;
 
@@ -321,13 +378,13 @@ function normalizeChariowSale(item: any, index: number, fallbackDate: string): E
 
   return {
     provider: 'chariow',
-    externalId,
+    externalId: `${account.id || account.accountName}:${externalId}`,
     status: status || 'completed',
     amount,
     currency,
     date,
-    label: product ? `Vente ${product}` : 'Vente Chariow',
-    notes: `Import Chariow - vente ${externalId}`,
+    label: product ? `Vente ${product}` : `Vente ${account.accountName}`,
+    notes: `Import Chariow (${account.accountName}) - vente ${externalId}`,
   };
 }
 
@@ -366,10 +423,21 @@ async function fetchJson(url: string, init: RequestInit, providerLabel: string) 
     const details = typeof payload?.message === 'string'
       ? payload.message
       : text.slice(0, 280);
-    throw new SyncError(`${providerLabel} a refuse la requete (${response.status}). ${details}`, response.status);
+    const hint = response.status === 404 ? notFoundHint(providerLabel) : '';
+    throw new SyncError(`${providerLabel} a refuse la requete (${response.status}). ${details}${hint}`, response.status);
   }
 
   return payload;
+}
+
+function notFoundHint(providerLabel: string) {
+  if (providerLabel === 'GoHighLevel') {
+    return ' Verifie que le token est un token API 2.0/Sub-Account, que le Location ID est correct et que les scopes Payments sont actifs.';
+  }
+  if (providerLabel === 'Chariow') {
+    return ' Verifie que la cle API Chariow est active et que le compte a acces a /v1/sales.';
+  }
+  return '';
 }
 
 function extractList(payload: any): any[] {
