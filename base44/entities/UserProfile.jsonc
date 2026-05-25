@@ -1,0 +1,50 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "current_monthly_revenue_fcfa": {
+      "type": "number"
+    },
+    "target_monthly_revenue_fcfa": {
+      "type": "number"
+    },
+    "monetization_ideas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ai_strategy_summary": {
+      "type": "string"
+    },
+    "whatsapp_number": {
+      "type": "string"
+    },
+    "onboarding_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "coaching_style_notes": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

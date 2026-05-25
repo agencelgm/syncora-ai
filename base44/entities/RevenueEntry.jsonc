@@ -1,0 +1,26 @@
+{
+  "name": "RevenueEntry",
+  "type": "object",
+  "properties": {
+    "amount_fcfa": {
+      "type": "number"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "source": {
+      "type": "string"
+    },
+    "objective_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "amount_fcfa",
+    "date"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "JournalEntry",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "content": {
+      "type": "string"
+    },
+    "mood": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "neutral",
+        "tired",
+        "struggling"
+      ],
+      "default": "good"
+    },
+    "revenue_today_fcfa": {
+      "type": "number"
+    },
+    "wins": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ai_insights": {
+      "type": "string"
+    },
+    "tasks_generated": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "date"
+  ]
+}

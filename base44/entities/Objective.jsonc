@@ -1,0 +1,75 @@
+{
+  "name": "Objective",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "target_amount_fcfa": {
+      "type": "number"
+    },
+    "current_amount_fcfa": {
+      "type": "number",
+      "default": 0
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "achieved",
+        "paused"
+      ],
+      "default": "active"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "financial",
+        "health",
+        "learning",
+        "relationship",
+        "project",
+        "other"
+      ],
+      "default": "financial"
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "target_amount": {
+            "type": "number"
+          },
+          "target_date": {
+            "type": "string"
+          },
+          "achieved": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "ai_strategy": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant"
+      ],
+      "default": "user"
+    },
+    "content": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "tasks_created": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "in_app",
+        "whatsapp"
+      ],
+      "default": "in_app"
+    }
+  },
+  "required": [
+    "role",
+    "content"
+  ]
+}

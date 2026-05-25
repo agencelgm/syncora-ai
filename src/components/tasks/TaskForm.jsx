@@ -1,0 +1,131 @@
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { X, Wand2, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+
+const PRIORITIES = ['critical', 'high', 'medium', 'low'];
+const PRIORITY_LABELS = { critical: 'Critique', high: 'Haute', medium: 'Moyenne', low: 'Faible' };
+
+export default function TaskForm({ task, onSave, onClose }) {
+  const [form, setForm] = useState({
+    title: task?.title || '',
+    description: task?.description || '',
+    priority: task?.priority || 'medium',
+    due_date: task?.due_date || '',
+    estimated_value_fcfa: task?.estimated_value_fcfa || '',
+  });
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const enrichWithAI = async () => {
+    if (!form.title) return;
+    setAiLoading(true);
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `Pour une tâche intitulée "${form.title}", génère en JSON :
+- priority: "critical"|"high"|"medium"|"low" 
+- ai_priority_score: 1-100
+- ai_coaching_note: une phrase courte de coaching (style Hormozi/Robbins, max 15 mots)
+- estimated_value_fcfa: estimation de valeur générée (nombre, 0 si non applicable)`,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          priority: { type: 'string' },
+          ai_priority_score: { type: 'number' },
+          ai_coaching_note: { type: 'string' },
+          estimated_value_fcfa: { type: 'number' },
+        },
+      },
+    });
+    setForm(prev => ({ ...prev, ...result }));
+    setAiLoading(false);
+  };
+
+  const handleSubmit = () => {
+    if (!form.title.trim()) return;
+    onSave({ ...form, estimated_value_fcfa: Number(form.estimated_value_fcfa) || 0 });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 25 }}
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-foreground">{task ? 'Modifier la tâche' : 'Nouvelle tâche'}</h3>
+          <button onClick={onClose} className="text-muted-foreground"><X size={20} /></button>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Titre de la tâche..."
+          value={form.title}
+          onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+          className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm mb-3 outline-none border border-transparent focus:border-gold/50"
+        />
+
+        <textarea
+          placeholder="Description (optionnel)..."
+          value={form.description}
+          onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+          rows={2}
+          className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm mb-3 outline-none border border-transparent focus:border-gold/50 resize-none"
+        />
+
+        <div className="flex gap-2 mb-3">
+          {PRIORITIES.map(p => (
+            <button
+              key={p}
+              onClick={() => setForm(prev => ({ ...prev, priority: p }))}
+              className={`flex-1 text-xs py-2 rounded-xl font-medium transition-all ${
+                form.priority === p
+                  ? 'bg-gold text-background'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {PRIORITY_LABELS[p]}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-3 mb-4">
+          <input
+            type="date"
+            value={form.due_date}
+            onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))}
+            className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
+          />
+          <input
+            type="number"
+            placeholder="Valeur FCFA"
+            value={form.estimated_value_fcfa}
+            onChange={e => setForm(p => ({ ...p, estimated_value_fcfa: e.target.value }))}
+            className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-gold/50"
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={enrichWithAI}
+            disabled={aiLoading || !form.title}
+            className="flex items-center gap-2 bg-blue-electric/10 border border-blue-electric/30 text-blue-electric rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-50"
+          >
+            {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+            IA
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 bg-gold text-background rounded-xl py-3 text-sm font-bold"
+          >
+            {task ? 'Modifier' : 'Créer la tâche'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

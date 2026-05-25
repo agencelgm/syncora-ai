@@ -1,0 +1,80 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "todo",
+        "in_progress",
+        "done",
+        "deferred"
+      ],
+      "default": "todo"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ],
+      "default": "medium"
+    },
+    "ai_priority_score": {
+      "type": "number",
+      "default": 50
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "defer_count": {
+      "type": "number",
+      "default": 0
+    },
+    "objective_id": {
+      "type": "string"
+    },
+    "estimated_value_fcfa": {
+      "type": "number"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "ai_chat",
+        "whatsapp",
+        "image_capture",
+        "journal"
+      ],
+      "default": "manual"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ai_coaching_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
