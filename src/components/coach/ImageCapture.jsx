@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, Upload, Camera, Loader2, AlertCircle } from 'lucide-react';
@@ -25,24 +25,6 @@ const normalizeExtractedTasks = (tasks = []) => (
     .filter(task => task.title)
 );
 
-function FileInputControl({ capture, disabled, className, children, onChange }) {
-  return (
-    <label className={`${className} ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
-      <input
-        type="file"
-        accept="image/*"
-        capture={capture}
-        disabled={disabled}
-        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-        onChange={onChange}
-      />
-      <span className="pointer-events-none flex items-center justify-center gap-2">
-        {children}
-      </span>
-    </label>
-  );
-}
-
 export default function ImageCapture({
   mode = 'notes',
   onProcessed,
@@ -54,9 +36,39 @@ export default function ImageCapture({
   const [preview, setPreview] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
   const [error, setError] = useState('');
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const galleryInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const pickerAttemptRef = useRef(0);
 
-  const isBusy = uploading || processing;
+  const isBusy = uploading || processing || cameraLoading;
   const isTaskMode = mode === 'tasks';
+
+  useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
+
+  useEffect(() => () => {
+    cameraStream?.getTracks().forEach(track => track.stop());
+  }, [cameraStream]);
+
+  const stopCamera = () => {
+    cameraStream?.getTracks().forEach(track => track.stop());
+    setCameraStream(null);
+  };
+
+  const showPickerHelpSoon = (message) => {
+    const attemptId = ++pickerAttemptRef.current;
+    window.setTimeout(() => {
+      if (attemptId === pickerAttemptRef.current) {
+        setError(message);
+      }
+    }, 1800);
+  };
 
   const resetImage = () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -66,8 +78,10 @@ export default function ImageCapture({
   };
 
   const handleFile = async (file) => {
+    pickerAttemptRef.current += 1;
+
     if (!file) {
-      setError("Aucun fichier sélectionné.");
+      setError("Aucun fichier sélectionné. Si rien ne s'ouvre, le navigateur ou la webview bloque probablement l'accès aux fichiers.");
       return;
     }
 
@@ -103,6 +117,94 @@ export default function ImageCapture({
     e.target.value = '';
     setError('');
     handleFile(file);
+  };
+
+  const openGallery = async () => {
+    if (isBusy) return;
+    setError('');
+
+    if ('showOpenFilePicker' in window) {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          multiple: false,
+          types: [{
+            description: 'Images',
+            accept: {
+              'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.heic', '.heif'],
+            },
+          }],
+        });
+        const file = await handle.getFile();
+        handleFile(file);
+        return;
+      } catch (err) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    galleryInputRef.current?.click();
+    showPickerHelpSoon("Si la galerie ne s'ouvre pas, ouvre l'application directement dans Chrome ou vérifie que la webview Base44 autorise l'accès aux fichiers.");
+  };
+
+  const openCameraFilePicker = () => {
+    cameraInputRef.current?.click();
+    showPickerHelpSoon("Si l'appareil photo ne s'ouvre pas, le conteneur bloque peut-être le sélecteur fichier. Essaie aussi d'ouvrir l'app dans Chrome.");
+  };
+
+  const startCamera = async () => {
+    if (isBusy) return;
+    setError('');
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      openCameraFilePicker();
+      return;
+    }
+
+    setCameraLoading(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+        },
+        audio: false,
+      });
+      setCameraStream(stream);
+    } catch (err) {
+      const permissionMessage = err?.name === 'NotAllowedError'
+        ? "Permission caméra refusée. Autorise la caméra pour ce site dans Android/Chrome, puis réessaie."
+        : "Caméra indisponible dans ce conteneur. Je tente le sélecteur photo Android en fallback.";
+      setError(permissionMessage);
+      openCameraFilePicker();
+    } finally {
+      setCameraLoading(false);
+    }
+  };
+
+  const captureCameraFrame = () => {
+    const video = videoRef.current;
+    if (!video?.videoWidth || !video?.videoHeight) {
+      setError("La caméra n'est pas encore prête. Réessaie dans une seconde.");
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      setError("Impossible de préparer la capture photo.");
+      return;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setError("Impossible de capturer la photo.");
+        return;
+      }
+      const file = new File([blob], `note-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      stopCamera();
+      handleFile(file);
+    }, 'image/jpeg', 0.9);
   };
 
   const processImage = async () => {
@@ -210,22 +312,51 @@ Retourne en JSON:
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-foreground">Envoyer une image</h3>
-          <button onClick={onClose} className="text-muted-foreground"><X size={20} /></button>
+          <button onClick={() => { stopCamera(); onClose(); }} className="text-muted-foreground"><X size={20} /></button>
         </div>
 
-        {preview ? (
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          tabIndex={-1}
+          onChange={handleInputChange}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          tabIndex={-1}
+          onChange={handleInputChange}
+        />
+
+        {cameraStream ? (
+          <div className="mb-4">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full rounded-2xl max-h-80 bg-black object-cover"
+            />
+          </div>
+        ) : preview ? (
           <div className="mb-4">
             <img src={preview} alt="Preview" className="w-full rounded-2xl max-h-48 object-cover" />
           </div>
         ) : (
-          <FileInputControl
+          <button
+            type="button"
+            onClick={openGallery}
             disabled={isBusy}
-            onChange={handleInputChange}
             className="relative w-full h-40 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 text-muted-foreground mb-4 hover:border-gold/50 hover:text-foreground transition-all overflow-hidden"
           >
             <Upload size={28} />
             <span className="text-sm">Sélectionne une photo ou capture</span>
-          </FileInputControl>
+          </button>
         )}
 
         {error && (
@@ -236,23 +367,42 @@ Retourne en JSON:
         )}
 
         <div className="flex gap-3">
-          {!preview ? (
+          {cameraStream ? (
             <>
-              <FileInputControl
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={captureCameraFrame}
+                className="flex-1 bg-gold text-background rounded-xl py-3 text-sm font-bold"
+              >
+                Capturer
+              </button>
+            </>
+          ) : !preview ? (
+            <>
+              <button
+                type="button"
+                onClick={openGallery}
                 disabled={isBusy}
-                onChange={handleInputChange}
-                className="relative flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all overflow-hidden"
+                className="relative flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all overflow-hidden disabled:opacity-60"
               >
                 <Upload size={16} /> Galerie
-              </FileInputControl>
-              <FileInputControl
-                capture="environment"
+              </button>
+              <button
+                type="button"
+                onClick={startCamera}
                 disabled={isBusy}
-                onChange={handleInputChange}
-                className="relative flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all overflow-hidden"
+                className="relative flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all overflow-hidden disabled:opacity-60"
               >
-                <Camera size={16} /> Photo
-              </FileInputControl>
+                {cameraLoading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                Photo
+              </button>
             </>
           ) : (
             <button
