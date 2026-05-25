@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wand2, Loader2, Camera } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -18,6 +18,11 @@ export default function TaskForm({ task, onSave, onClose }) {
   });
   const [aiLoading, setAiLoading] = useState(false);
   const [showImageCapture, setShowImageCapture] = useState(false);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, []);
 
   const handleImageProcessed = (imageUrl, extractedText) => {
     setShowImageCapture(false);
@@ -62,9 +67,10 @@ export default function TaskForm({ task, onSave, onClose }) {
       onClick={onClose}
     >
       <motion.div
+        ref={scrollRef}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border max-h-[calc(100vh-80px)] overflow-y-auto"
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border max-h-[calc(100dvh-80px)] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
       <div className="p-6" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 2.5rem)' }}>
@@ -75,6 +81,7 @@ export default function TaskForm({ task, onSave, onClose }) {
 
         <input
           type="text"
+          autoFocus
           placeholder="Titre de la tâche..."
           value={form.title}
           onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
@@ -150,16 +157,17 @@ export default function TaskForm({ task, onSave, onClose }) {
           </button>
         </div>
 
-        <AnimatePresence>
-          {showImageCapture && (
-            <ImageCapture
-              onProcessed={handleImageProcessed}
-              onClose={() => setShowImageCapture(false)}
-            />
-          )}
-        </AnimatePresence>
       </div>
       </motion.div>
+
+      <AnimatePresence>
+        {showImageCapture && (
+          <ImageCapture
+            onProcessed={handleImageProcessed}
+            onClose={() => setShowImageCapture(false)}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Upload, Camera, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -7,8 +7,6 @@ export default function ImageCapture({ onProcessed, onClose }) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
-  const galleryRef = useRef();
-  const cameraRef = useRef();
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -45,8 +43,8 @@ Retourne en JSON:
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end"
-      onClick={onClose}
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-end"
+      onClick={(e) => { e.stopPropagation(); onClose(); }}
     >
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }}
@@ -65,46 +63,24 @@ Retourne en JSON:
             <img src={preview} alt="Preview" className="w-full rounded-2xl max-h-48 object-cover" />
           </div>
         ) : (
-          <button
-            onClick={() => galleryRef.current?.click()}
-            className="w-full h-40 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 text-muted-foreground mb-4 hover:border-gold/50 transition-all"
-          >
+          <label className="w-full h-40 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 text-muted-foreground mb-4 hover:border-gold/50 transition-all cursor-pointer">
+            <input type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files?.[0])} />
             <Upload size={28} />
             <span className="text-sm">Sélectionne une photo ou capture</span>
-          </button>
+          </label>
         )}
-
-        <input
-          ref={galleryRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={e => handleFile(e.target.files[0])}
-        />
-        <input
-          ref={cameraRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={e => handleFile(e.target.files[0])}
-        />
 
         <div className="flex gap-3">
           {!preview ? (
             <>
-              <button
-                onClick={() => galleryRef.current?.click()}
-                className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2"
-              >
+              <label className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer">
+                <input type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files?.[0])} />
                 <Upload size={16} /> Galerie
-              </button>
-              <button
-                onClick={() => cameraRef.current?.click()}
-                className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2"
-              >
+              </label>
+              <label className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer">
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={e => handleFile(e.target.files?.[0])} />
                 <Camera size={16} /> Photo
-              </button>
+              </label>
             </>
           ) : (
             <button
