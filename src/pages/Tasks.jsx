@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Filter, CheckCircle2, Clock, AlertTriangle, Zap, Circle, RotateCcw, Trash2, Flame, CalendarClock } from 'lucide-react';
+import { Plus, Flame, CalendarClock } from 'lucide-react';
 import { format } from 'date-fns';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskItem from '@/components/tasks/TaskItem';
@@ -15,6 +15,42 @@ const FILTERS = [
   { key: 'done', label: 'Faites' },
   { key: 'deferred', label: 'Reportées' },
 ];
+
+const TASK_PRIORITIES = ['critical', 'high', 'medium', 'low'];
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const normalizeImageTask = (task) => {
+  const title = String(task?.title || '').trim();
+  if (!title) return null;
+
+  const score = Number(task?.ai_priority_score);
+  const dueDate = String(task?.due_date || '').trim();
+  const dueTime = String(task?.due_time || '').trim();
+  const tags = Array.isArray(task?.tags)
+    ? task.tags.map(tag => String(tag).trim()).filter(Boolean).slice(0, 5)
+    : [];
+
+  const payload = {
+    title,
+    status: 'todo',
+    source: 'image_capture',
+    priority: TASK_PRIORITIES.includes(task?.priority) ? task.priority : 'medium',
+    ai_priority_score: Number.isFinite(score) ? Math.min(100, Math.max(1, score)) : 60,
+    estimated_value_fcfa: Number(task?.estimated_value_fcfa) || 0,
+  };
+
+  const description = String(task?.description || '').trim();
+  const coachingNote = String(task?.ai_coaching_note || '').trim();
+
+  if (description) payload.description = description;
+  if (DATE_PATTERN.test(dueDate)) payload.due_date = dueDate;
+  if (TIME_PATTERN.test(dueTime)) payload.due_time = dueTime;
+  if (coachingNote) payload.ai_coaching_note = coachingNote;
+  if (tags.length > 0) payload.tags = tags;
+
+  return payload;
+};
 
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
@@ -42,6 +78,22 @@ export default function Tasks() {
     setShowForm(false);
     setEditTask(null);
     loadTasks();
+  };
+
+  const handleCreateImageTasks = async (extractedTasks) => {
+    const taskPayloads = (extractedTasks || [])
+      .map(normalizeImageTask)
+      .filter(Boolean)
+      .slice(0, 10);
+
+    if (taskPayloads.length === 0) {
+      throw new Error('Aucune tâche valide détectée');
+    }
+
+    await Promise.all(taskPayloads.map(taskData => base44.entities.Task.create(taskData)));
+    setShowForm(false);
+    setEditTask(null);
+    await loadTasks();
   };
 
   const handleComplete = async (task) => {
@@ -158,6 +210,7 @@ export default function Tasks() {
           <TaskForm
             task={editTask}
             onSave={handleSave}
+            onCreateTasks={handleCreateImageTasks}
             onClose={() => { setShowForm(false); setEditTask(null); }}
           />
         )}

@@ -8,7 +8,7 @@ import ImageCapture from '@/components/coach/ImageCapture';
 const PRIORITIES = ['critical', 'high', 'medium', 'low'];
 const PRIORITY_LABELS = { critical: 'Critique', high: 'Haute', medium: 'Moyenne', low: 'Faible' };
 
-export default function TaskForm({ task, onSave, onClose }) {
+export default function TaskForm({ task, onSave, onClose, onCreateTasks }) {
   const [form, setForm] = useState({
     title: task?.title || '',
     description: task?.description || '',
@@ -25,12 +25,12 @@ export default function TaskForm({ task, onSave, onClose }) {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, []);
 
-  const handleImageProcessed = (imageUrl, extractedText) => {
+  const handleTasksExtracted = async (_imageUrl, extractedTasks) => {
+    if (onCreateTasks) {
+      await onCreateTasks(extractedTasks);
+      return;
+    }
     setShowImageCapture(false);
-    setForm(prev => ({
-      ...prev,
-      description: (prev.description ? prev.description + '\n' : '') + extractedText,
-    }));
   };
 
   const enrichWithAI = async () => {
@@ -164,7 +164,8 @@ export default function TaskForm({ task, onSave, onClose }) {
       <AnimatePresence>
         {showImageCapture && (
           <ImageCapture
-            onProcessed={handleImageProcessed}
+            mode="tasks"
+            onTasksExtracted={handleTasksExtracted}
             onClose={() => setShowImageCapture(false)}
           />
         )}
