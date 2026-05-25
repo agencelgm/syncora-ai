@@ -44,6 +44,11 @@
     },
     "coaching_style_notes": {
       "type": "string"
+    },
+    "daily_reminder_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Recevoir un email de rappel quotidien en fin de journ\u00e9e"
     }
   },
   "required": []

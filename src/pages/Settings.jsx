@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, ChevronRight } from 'lucide-react';
+import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, ChevronRight, Bell } from 'lucide-react';
 
 const SKILL_SUGGESTIONS = ['Coaching', 'Marketing digital', 'Vente', 'Copywriting', 'Formation', 'Consulting', 'Design', 'Développement', 'Finance', 'E-commerce'];
 const DOMAIN_SUGGESTIONS = ['Business', 'Santé', 'Tech', 'Éducation', 'Immobilier', 'Mode', 'Food', 'Voyage', 'Personnel'];
@@ -21,6 +21,7 @@ export default function Settings() {
     whatsapp_number: '',
     coaching_style_notes: '',
     monetization_ideas: [],
+    daily_reminder_enabled: true,
   });
   const [newSkill, setNewSkill] = useState('');
   const [newIdea, setNewIdea] = useState('');
@@ -42,6 +43,7 @@ export default function Settings() {
         whatsapp_number: profiles[0].whatsapp_number || '',
         coaching_style_notes: profiles[0].coaching_style_notes || '',
         monetization_ideas: profiles[0].monetization_ideas || [],
+        daily_reminder_enabled: profiles[0].daily_reminder_enabled !== false,
       });
     }
     setLoading(false);
@@ -348,6 +350,32 @@ export default function Settings() {
               <span className="text-sm text-muted-foreground">Connecté via ton compte app</span>
               <span className="text-xs text-success font-medium">✓ Actif</span>
             </div>
+          </div>
+
+          {/* Daily reminder */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 bg-gold/10 rounded-xl flex items-center justify-center">
+                <Bell size={18} className="text-gold" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground text-sm">Rappel quotidien du soir</p>
+                <p className="text-xs text-muted-foreground">Email chaque jour à 19h : objectifs + rappel revenus</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setForm(p => ({ ...p, daily_reminder_enabled: !p.daily_reminder_enabled }))}
+              className={`w-full rounded-xl px-4 py-3 flex items-center justify-between transition-all ${
+                form.daily_reminder_enabled ? 'bg-success/10 border border-success/30' : 'bg-muted/50 border border-border'
+              }`}
+            >
+              <span className={`text-sm font-medium ${form.daily_reminder_enabled ? 'text-success' : 'text-muted-foreground'}`}>
+                {form.daily_reminder_enabled ? '✓ Rappels activés' : 'Rappels désactivés'}
+              </span>
+              <div className={`w-10 h-6 rounded-full transition-all relative ${form.daily_reminder_enabled ? 'bg-success' : 'bg-muted'}`}>
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all ${form.daily_reminder_enabled ? 'left-[18px]' : 'left-0.5'}`} />
+              </div>
+            </button>
           </div>
 
           {/* Info */}
