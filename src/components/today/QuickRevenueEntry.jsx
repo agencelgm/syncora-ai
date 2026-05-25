@@ -47,7 +47,7 @@ export default function QuickRevenueEntry({ onAdded }) {
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25 }}
-              className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border"
+              className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border pb-8"
               onClick={e => e.stopPropagation()}
             >
               {saved ? (

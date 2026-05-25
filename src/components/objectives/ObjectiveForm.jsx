@@ -52,7 +52,7 @@ export default function ObjectiveForm({ objective, onSave, onClose }) {
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border max-h-[calc(100vh-80px)] overflow-y-auto pb-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
