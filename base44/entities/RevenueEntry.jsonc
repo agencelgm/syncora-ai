@@ -15,6 +15,14 @@
     "objective_id": {
       "type": "string"
     },
+    "task_id": {
+      "type": "string",
+      "description": "T\u00e2che/action qui a g\u00e9n\u00e9r\u00e9 ce revenu"
+    },
+    "action_label": {
+      "type": "string",
+      "description": "Description courte de l'action si pas de t\u00e2che li\u00e9e"
+    },
     "notes": {
       "type": "string"
     }

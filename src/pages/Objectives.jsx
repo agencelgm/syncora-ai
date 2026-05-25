@@ -5,6 +5,7 @@ import { Target, Plus, TrendingUp, TrendingDown, Zap, ChevronRight, DollarSign, 
 import ObjectiveCard from '@/components/objectives/ObjectiveCard';
 import ObjectiveForm from '@/components/objectives/ObjectiveForm';
 import RevenueTracker from '@/components/objectives/RevenueTracker';
+import HistoryView from '@/components/history/HistoryView';
 
 export default function Objectives() {
   const [objectives, setObjectives] = useState([]);
@@ -85,13 +86,17 @@ export default function Objectives() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-4">
-        {['objectives', 'revenues'].map(t => (
+        {[
+          { k: 'objectives', l: 'Objectifs' },
+          { k: 'revenues', l: 'Revenus' },
+          { k: 'history', l: 'Historique' },
+        ].map(t => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 text-sm font-medium py-2 rounded-xl transition-all ${tab === t ? 'bg-gold text-background' : 'bg-card border border-border text-muted-foreground'}`}
+            key={t.k}
+            onClick={() => setTab(t.k)}
+            className={`flex-1 text-sm font-medium py-2 rounded-xl transition-all ${tab === t.k ? 'bg-gold text-background' : 'bg-card border border-border text-muted-foreground'}`}
           >
-            {t === 'objectives' ? 'Objectifs' : 'Revenus'}
+            {t.l}
           </button>
         ))}
       </div>
@@ -115,8 +120,10 @@ export default function Objectives() {
             <p className="text-center text-muted-foreground py-12 text-sm">Aucun objectif défini</p>
           )}
         </div>
-      ) : (
+      ) : tab === 'revenues' ? (
         <RevenueTracker revenues={revenues} onRefresh={loadData} />
+      ) : (
+        <HistoryView revenues={revenues} objectives={objectives} />
       )}
 
       {showForm && (

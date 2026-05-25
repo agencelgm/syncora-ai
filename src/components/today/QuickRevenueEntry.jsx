@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DollarSign, Plus, X, CheckCircle2 } from 'lucide-react';
+import { DollarSign, Plus, X, CheckCircle2, Link2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 
@@ -8,21 +8,33 @@ export default function QuickRevenueEntry({ onAdded }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [source, setSource] = useState('');
+  const [taskId, setTaskId] = useState('');
+  const [actionLabel, setActionLabel] = useState('');
+  const [tasks, setTasks] = useState([]);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (open) base44.entities.Task.filter({ status: 'done' }, '-completed_at', 30).then(setTasks);
+  }, [open]);
 
   const submit = async () => {
     if (!amount) return;
-    await base44.entities.RevenueEntry.create({
+    const payload = {
       amount_fcfa: Number(amount),
       date: format(new Date(), 'yyyy-MM-dd'),
       source: source || 'Non précisé',
-    });
+      action_label: actionLabel,
+    };
+    if (taskId) payload.task_id = taskId;
+    await base44.entities.RevenueEntry.create(payload);
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
       setOpen(false);
       setAmount('');
       setSource('');
+      setTaskId('');
+      setActionLabel('');
       onAdded?.();
     }, 1200);
   };
@@ -78,9 +90,30 @@ export default function QuickRevenueEntry({ onAdded }) {
                     placeholder="Source (client, projet, formation...)"
                     value={source}
                     onChange={e => setSource(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && submit()}
-                    className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-success/50 mb-4"
+                    className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-success/50 mb-2"
                   />
+
+                  <label className="text-xs text-muted-foreground mb-1 mt-1 flex items-center gap-1"><Link2 size={12} /> Action qui a généré ce revenu</label>
+                  <select
+                    value={taskId}
+                    onChange={e => setTaskId(e.target.value)}
+                    className="w-full bg-muted rounded-xl px-4 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-success/50 mb-2"
+                  >
+                    <option value="">— Aucune tâche liée —</option>
+                    {tasks.map(t => (
+                      <option key={t.id} value={t.id}>{t.title}</option>
+                    ))}
+                  </select>
+                  {!taskId && (
+                    <input
+                      type="text"
+                      placeholder="Ou décris l'action courte"
+                      value={actionLabel}
+                      onChange={e => setActionLabel(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && submit()}
+                      className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-success/50 mb-4"
+                    />
+                  )}
                   <button
                     onClick={submit}
                     disabled={!amount}
