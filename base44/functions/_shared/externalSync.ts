@@ -278,7 +278,7 @@ async function fetchGoHighLevelRecords(periodStart: string, periodEnd: string, a
   const baseUrl = Deno.env.get('GHL_API_BASE_URL') || 'https://services.leadconnectorhq.com';
   const apiVersion = Deno.env.get('GHL_API_VERSION') || '2023-02-21';
   const url = new URL('/payments/transactions', baseUrl);
-  url.searchParams.set('altId', locationId);
+  url.searchParams.set('altId', account.locationId);
   url.searchParams.set('altType', 'location');
   url.searchParams.set('startAt', `${periodStart}T00:00:00.000Z`);
   url.searchParams.set('endAt', `${periodEnd}T23:59:59.999Z`);
