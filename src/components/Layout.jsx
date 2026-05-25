@@ -1,7 +1,6 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Home, CheckSquare, Target, BookOpen, MessageCircle, Settings } from 'lucide-react';
 import useTaskNotifications from '@/hooks/useTaskNotifications';
-import FloatingVoiceButton from '@/components/common/FloatingVoiceButton';
 
 const navItems = [
   { path: '/', icon: Home, label: "Aujourd'hui" },
@@ -21,7 +20,6 @@ export default function Layout() {
       <div className="flex-1 overflow-y-auto pb-16" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
         <Outlet />
       </div>
-      <FloatingVoiceButton />
       <nav
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card border-t border-border z-[99]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Image, Loader2, Wand2 } from 'lucide-react';
+import { Send, Image, Loader2, Wand2, Mic } from 'lucide-react';
 import ChatMessage from '@/components/coach/ChatMessage';
 import ImageCapture from '@/components/coach/ImageCapture';
+import VoiceRecorder from '@/components/tasks/VoiceRecorder';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
 import { asObject, asStringArray } from '@/lib/llm';
 
@@ -12,6 +13,7 @@ export default function Coach() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showImageCapture, setShowImageCapture] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [profile, setProfile] = useState(null);
   const bottomRef = useRef(null);
 
@@ -133,6 +135,14 @@ Si pertinent, propose des tâches à créer en listant task_titles (max 3).`,
     await sendMessage(extractedText ? `[Note extraite de l'image]\n${extractedText}` : 'Voici une image de mes notes, peux-tu extraire les tâches ?', imageUrl);
   };
 
+  const handleVoiceTasksExtracted = async (extractedTasks) => {
+    setShowVoiceRecorder(false);
+    if (extractedTasks && extractedTasks.length > 0) {
+      const taskTitles = extractedTasks.map(t => t.title).join(', ');
+      await sendMessage(`J'ai créé ces tâches par voix : ${taskTitles}`);
+    }
+  };
+
   const QUICK_PROMPTS = [
     "Qu'est-ce que j'ai à faire aujourd'hui ?",
     "Donne-moi un plan pour augmenter mes revenus",
@@ -206,6 +216,12 @@ Si pertinent, propose des tâches à créer en listant task_titles (max 3).`,
         )}
         <div className="flex gap-2">
           <button
+            onClick={() => setShowVoiceRecorder(true)}
+            className="bg-card border border-border rounded-xl w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold/50 transition-all flex-shrink-0"
+          >
+            <Mic size={18} />
+          </button>
+          <button
             onClick={() => setShowImageCapture(true)}
             className="bg-card border border-border rounded-xl w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold/50 transition-all flex-shrink-0"
           >
@@ -233,6 +249,13 @@ Si pertinent, propose des tâches à créer en listant task_titles (max 3).`,
         <ImageCapture
           onProcessed={handleImageProcessed}
           onClose={() => setShowImageCapture(false)}
+        />
+      )}
+
+      {showVoiceRecorder && (
+        <VoiceRecorder
+          onTasksExtracted={handleVoiceTasksExtracted}
+          onClose={() => setShowVoiceRecorder(false)}
         />
       )}
     </div>
