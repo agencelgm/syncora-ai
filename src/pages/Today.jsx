@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Circle, Flame, TrendingUp, Zap, ChevronRight, Plus } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isToday as isDateToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import confetti from 'canvas-confetti';
 import { Link } from 'react-router-dom';
@@ -11,6 +11,7 @@ import TodayTaskCard from '@/components/today/TodayTaskCard';
 import StreakBadge from '@/components/today/StreakBadge';
 import ProgressRing from '@/components/today/ProgressRing';
 import QuickRevenueEntry from '@/components/today/QuickRevenueEntry';
+import WeekCalendar from '@/components/today/WeekCalendar';
 
 export default function Today() {
   const [tasks, setTasks] = useState([]);
@@ -20,6 +21,7 @@ export default function Today() {
   const [todayRevenue, setTodayRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     loadData();
@@ -52,7 +54,11 @@ export default function Today() {
     setCompletedToday(c => c + 1);
   };
 
-  const todayTasks = tasks.slice(0, 5);
+  const isSelectedToday = isDateToday(selectedDate);
+  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+  const todayTasks = isSelectedToday
+    ? tasks.slice(0, 5)
+    : tasks.filter(t => t.due_date === selectedDateStr);
 
   if (loading) {
     return (
@@ -96,10 +102,14 @@ export default function Today() {
         </button>
       </div>
 
+      {/* Week calendar */}
+      <WeekCalendar tasks={tasks} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+
       {/* Today's priority tasks */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold flex items-center gap-2">
-          <Flame size={16} className="text-gold" /> Priorités du jour
+          <Flame size={16} className="text-gold" />
+          {isSelectedToday ? 'Priorités du jour' : `Tâches du ${format(selectedDate, 'EEEE d', { locale: fr })}`}
         </h2>
         <Link to="/tasks" className="text-muted-foreground text-xs flex items-center gap-1">
           Tout voir <ChevronRight size={14} />
