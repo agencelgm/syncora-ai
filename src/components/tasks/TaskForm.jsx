@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Wand2, Loader2, Camera } from 'lucide-react';
+import { X, Wand2, Loader2, Camera, Mic } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import ImageCapture from '@/components/coach/ImageCapture';
+import VoiceRecorder from '@/components/tasks/VoiceRecorder';
 import { asObject } from '@/lib/llm';
 
 const PRIORITIES = ['critical', 'high', 'medium', 'low'];
@@ -20,18 +21,20 @@ export default function TaskForm({ task, onSave, onClose, onCreateTasks }) {
   });
   const [aiLoading, setAiLoading] = useState(false);
   const [showImageCapture, setShowImageCapture] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, []);
 
-  const handleTasksExtracted = async (_imageUrl, extractedTasks) => {
+  const handleTasksExtracted = async (extractedTasks) => {
     if (onCreateTasks) {
       await onCreateTasks(extractedTasks);
       return;
     }
     setShowImageCapture(false);
+    setShowVoiceRecorder(false);
   };
 
   const enrichWithAI = async () => {
@@ -141,6 +144,12 @@ export default function TaskForm({ task, onSave, onClose, onCreateTasks }) {
 
         <div className="flex gap-2">
           <button
+            onClick={() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); setShowVoiceRecorder(true); }}
+            className="flex items-center justify-center bg-secondary border border-border text-foreground rounded-xl w-12 h-12 shrink-0"
+          >
+            <Mic size={18} />
+          </button>
+          <button
             onClick={() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); setShowImageCapture(true); }}
             className="flex items-center justify-center bg-secondary border border-border text-foreground rounded-xl w-12 h-12 shrink-0"
           >
@@ -169,8 +178,14 @@ export default function TaskForm({ task, onSave, onClose, onCreateTasks }) {
         {showImageCapture && (
           <ImageCapture
             mode="tasks"
-            onTasksExtracted={handleTasksExtracted}
+            onTasksExtracted={(imageUrl, tasks) => handleTasksExtracted(tasks)}
             onClose={() => setShowImageCapture(false)}
+          />
+        )}
+        {showVoiceRecorder && (
+          <VoiceRecorder
+            onTasksExtracted={handleTasksExtracted}
+            onClose={() => setShowVoiceRecorder(false)}
           />
         )}
       </AnimatePresence>
