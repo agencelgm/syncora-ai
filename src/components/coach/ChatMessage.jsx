@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
-export default function ChatMessage({ message, index }) {
+export default function ChatMessage({ message, index, onConfirmAction, actionLoadingId }) {
   const isUser = message.role === 'user';
+  const isPendingAction = !isUser && message.agent_action_id && message.agent_action_status === 'pending';
+  const isExecuting = actionLoadingId === message.agent_action_id;
+  const isExecutedAction = !isUser && message.agent_action_status === 'executed';
+  const isFailedAction = !isUser && message.agent_action_status === 'failed';
 
   return (
     <motion.div
@@ -17,11 +21,11 @@ export default function ChatMessage({ message, index }) {
           <span className="text-background text-xs font-bold">M</span>
         </div>
       )}
-      <div className={`max-w-[82%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+      <div className={`max-w-[82%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
         {message.image_url && (
           <img
             src={message.image_url}
-            alt="Note partagée"
+            alt="Note partagee"
             className="rounded-2xl max-h-48 object-cover w-full"
           />
         )}
@@ -40,10 +44,48 @@ export default function ChatMessage({ message, index }) {
             </div>
           )}
         </div>
+
+        {isPendingAction && (
+          <div className="w-full bg-gold/10 border border-gold/30 rounded-xl p-3">
+            <div className="flex items-start gap-2 mb-3">
+              <ShieldCheck size={15} className="text-gold flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Confirmation requise</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {message.agent_action_summary || 'Confirme pour executer cette action.'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onConfirmAction?.(message)}
+              disabled={isExecuting}
+              className="w-full bg-gold text-background rounded-lg px-3 py-2 text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {isExecuting ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
+              Confirmer
+            </button>
+          </div>
+        )}
+
         {message.tasks_created?.length > 0 && (
           <div className="flex items-center gap-1 text-xs text-success px-1">
             <CheckCircle2 size={11} />
-            <span>{message.tasks_created.length} tâche{message.tasks_created.length > 1 ? 's' : ''} créée{message.tasks_created.length > 1 ? 's' : ''}</span>
+            <span>{message.tasks_created.length} tache{message.tasks_created.length > 1 ? 's' : ''} creee{message.tasks_created.length > 1 ? 's' : ''}</span>
+          </div>
+        )}
+
+        {isExecutedAction && !message.tasks_created?.length && (
+          <div className="flex items-center gap-1 text-xs text-success px-1">
+            <CheckCircle2 size={11} />
+            <span>Action executee</span>
+          </div>
+        )}
+
+        {isFailedAction && (
+          <div className="flex items-center gap-1 text-xs text-destructive px-1">
+            <TriangleAlert size={11} />
+            <span>Action non executee</span>
           </div>
         )}
       </div>

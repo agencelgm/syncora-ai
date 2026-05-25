@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, Bell } from 'lucide-react';
+import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, Bell, Database, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import IntegrationSection from '@/components/settings/IntegrationSection';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
@@ -29,8 +29,15 @@ export default function Settings() {
   const [newSkill, setNewSkill] = useState('');
   const [newIdea, setNewIdea] = useState('');
   const [activeTab, setActiveTab] = useState('profile');
+  const [syncRuns, setSyncRuns] = useState([]);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncError, setSyncError] = useState('');
+  const [syncSummary, setSyncSummary] = useState(null);
 
-  useEffect(() => { loadProfile(); }, []);
+  useEffect(() => {
+    loadProfile();
+    loadSyncRuns();
+  }, []);
 
   const loadProfile = async () => {
     const user = await getCurrentUser();
@@ -51,6 +58,40 @@ export default function Settings() {
       });
     }
     setLoading(false);
+  };
+
+  const loadSyncRuns = async () => {
+    try {
+      const runs = await base44.entities.ExternalSyncRun.filter(
+        { target_user_email: 'kkaderkonan@gmail.com' },
+        '-created_date',
+        5,
+      );
+      setSyncRuns(runs);
+    } catch {
+      setSyncRuns([]);
+    }
+  };
+
+  const syncExternalRevenue = async () => {
+    setSyncLoading(true);
+    setSyncError('');
+    setSyncSummary(null);
+
+    try {
+      const { periodStart, periodEnd } = currentMonthRange();
+      const result = await base44.functions.invoke('syncExternalRevenue', {
+        periodStart,
+        periodEnd,
+        providers: ['gohighlevel', 'chariow'],
+      });
+      setSyncSummary(result);
+      await loadSyncRuns();
+    } catch (err) {
+      setSyncError(readError(err));
+    } finally {
+      setSyncLoading(false);
+    }
   };
 
   const save = async () => {
@@ -317,6 +358,83 @@ export default function Settings() {
 
       {activeTab === 'integrations' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+          {/* Revenue sources */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 bg-gold/10 rounded-xl flex items-center justify-center">
+                <Database size={18} className="text-gold" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground text-sm">Sources de revenus</p>
+                <p className="text-xs text-muted-foreground">GoHighLevel et Chariow vers kkaderkonan@gmail.com</p>
+              </div>
+              <button
+                type="button"
+                onClick={syncExternalRevenue}
+                disabled={syncLoading}
+                className="bg-gold text-background rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-2 disabled:opacity-60"
+              >
+                {syncLoading ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                Sync
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {['GoHighLevel', 'Chariow'].map(provider => (
+                <div key={provider} className="bg-muted/50 border border-border rounded-xl p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 size={13} className="text-success" />
+                    <span className="text-xs font-semibold text-foreground">{provider}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Revenus payes/importables</p>
+                </div>
+              ))}
+            </div>
+
+            {syncRuns[0] && (
+              <div className="bg-muted/40 border border-border rounded-xl p-3 mb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-muted-foreground">Derniere sync</span>
+                  <span className={`text-[10px] font-bold uppercase rounded-full px-2 py-1 ${
+                    syncRuns[0].status === 'success'
+                      ? 'bg-success/10 text-success'
+                      : syncRuns[0].status === 'partial'
+                        ? 'bg-gold/10 text-gold'
+                        : 'bg-destructive/10 text-destructive'
+                  }`}>
+                    {syncRuns[0].status}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground font-semibold mt-1">
+                  {(syncRuns[0].total_fcfa || 0).toLocaleString()} FCFA
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {syncRuns[0].total_imported || 0} importe(s), {syncRuns[0].total_skipped || 0} deja present(s)
+                  {' '}du {syncRuns[0].period_start} au {syncRuns[0].period_end}
+                </p>
+              </div>
+            )}
+
+            {syncSummary && (
+              <div className="bg-success/10 border border-success/30 rounded-xl px-3 py-2 mb-3">
+                <p className="text-xs text-success font-semibold">
+                  Sync terminee: {syncSummary.totals?.imported || 0} revenu(s) importe(s), {syncSummary.totals?.skipped || 0} doublon(s) evite(s).
+                </p>
+              </div>
+            )}
+
+            {syncError && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl px-3 py-2 mb-3 flex gap-2">
+                <AlertTriangle size={14} className="text-destructive flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive leading-relaxed">{syncError}</p>
+              </div>
+            )}
+
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Les imports sont dedupliques par transaction externe. Les devises non FCFA sont converties en XOF avec ExchangeRate-API.
+            </p>
+          </div>
+
           {/* WhatsApp */}
           <div className="bg-card border border-border rounded-2xl p-4">
             <div className="flex items-center gap-3 mb-3">
@@ -395,21 +513,38 @@ export default function Settings() {
           </div>
 
           <DeleteAccountSection />
-          </motion.div>
-          )}
+        </motion.div>
+      )}
 
-          {activeTab === 'api' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-              <div className="bg-muted/30 rounded-2xl p-4 mb-4">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  🔐 Tes clés API restent chiffrées et privées. Seul ton coach IA y a accès pour analyser tes données GoHighLevel et Chariow. Tu peux ajouter plusieurs comptes par service.
-                </p>
-              </div>
-              <div className="bg-card border border-border rounded-2xl p-4">
-                <IntegrationSection onUpdated={loadProfile} />
-              </div>
-            </motion.div>
-          )}
+      {activeTab === 'api' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <div className="bg-muted/30 rounded-2xl p-4 mb-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Tes cles API restent chiffrees et privees. Seul ton coach IA y a acces pour analyser tes donnees GoHighLevel et Chariow. Tu peux ajouter plusieurs comptes par service.
+            </p>
           </div>
-          );
-          }
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <IntegrationSection onUpdated={loadProfile} />
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+function currentMonthRange() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return {
+    periodStart: `${year}-${month}-01`,
+    periodEnd: `${year}-${month}-${day}`,
+  };
+}
+
+function readError(err) {
+  const data = err?.data || err?.response?.data;
+  return data?.message || data?.error || err?.message || 'La synchronisation a echoue.';
+}

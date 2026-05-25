@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Eye, EyeOff, Save, Loader2, Trash2, Plus } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Trash2, Plus } from 'lucide-react';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function IntegrationSection({ onUpdated }) {

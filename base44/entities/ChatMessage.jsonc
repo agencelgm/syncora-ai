@@ -29,6 +29,24 @@
         "whatsapp"
       ],
       "default": "in_app"
+    },
+    "agent_action_id": {
+      "type": "string"
+    },
+    "agent_action_type": {
+      "type": "string"
+    },
+    "agent_action_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "executed",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "agent_action_summary": {
+      "type": "string"
     }
   },
   "required": [

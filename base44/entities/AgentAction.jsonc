@@ -1,0 +1,45 @@
+{
+  "name": "AgentAction",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "create_task",
+        "create_objective",
+        "sync_external_results"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "executed",
+        "failed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "result": {
+      "type": "object"
+    },
+    "error": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "type",
+    "status",
+    "summary"
+  ]
+}

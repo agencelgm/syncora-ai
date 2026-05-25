@@ -25,6 +25,30 @@
     },
     "notes": {
       "type": "string"
+    },
+    "external_provider": {
+      "type": "string",
+      "description": "Source externe importee, par exemple gohighlevel ou chariow"
+    },
+    "external_id": {
+      "type": "string",
+      "description": "Identifiant stable de la transaction chez le fournisseur externe"
+    },
+    "external_status": {
+      "type": "string"
+    },
+    "original_amount": {
+      "type": "number"
+    },
+    "original_currency": {
+      "type": "string"
+    },
+    "exchange_rate_to_fcfa": {
+      "type": "number"
+    },
+    "imported_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
