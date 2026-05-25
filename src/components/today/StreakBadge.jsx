@@ -1,12 +1,14 @@
 import { Flame } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function StreakBadge() {
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    base44.entities.JournalEntry.list('-date', 30).then(entries => {
+    getCurrentUser().then(user => {
+      base44.entities.JournalEntry.filter({ created_by_id: user?.id }, '-date', 30).then(entries => {
       let s = 0;
       const today = new Date();
       for (let i = 0; i < 30; i++) {
@@ -17,6 +19,7 @@ export default function StreakBadge() {
         else break;
       }
       setStreak(s);
+      });
     });
   }, []);
 

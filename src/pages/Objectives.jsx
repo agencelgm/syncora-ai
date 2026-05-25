@@ -8,6 +8,7 @@ import RevenueTracker from '@/components/objectives/RevenueTracker';
 import RevenueSummaryTable from '@/components/objectives/RevenueSummaryTable';
 import HistoryView from '@/components/history/HistoryView';
 import MonthlyRevenueChart from '@/components/objectives/MonthlyRevenueChart';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function Objectives() {
   const [objectives, setObjectives] = useState([]);
@@ -20,9 +21,11 @@ export default function Objectives() {
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
+    const user = await getCurrentUser();
+    const uid = user?.id;
     const [objs, revs] = await Promise.all([
-      base44.entities.Objective.list('-created_date', 20),
-      base44.entities.RevenueEntry.list('-date', 30),
+      base44.entities.Objective.filter({ created_by_id: uid }, '-created_date', 20),
+      base44.entities.RevenueEntry.filter({ created_by_id: uid }, '-date', 30),
     ]);
     setObjectives(objs);
     setRevenues(revs);
@@ -40,10 +43,12 @@ export default function Objectives() {
     loadData();
   };
 
-  // Récupère TOUS les revenus pour le graphique (les 6 derniers mois)
+  // Récupère TOUS les revenus pour le graphique (les 6 derniers mois) — filtré par utilisateur
   const [allRevenues, setAllRevenues] = useState([]);
   useEffect(() => {
-    base44.entities.RevenueEntry.list('-date', 500).then(setAllRevenues);
+    getCurrentUser().then(user => {
+      base44.entities.RevenueEntry.filter({ created_by_id: user?.id }, '-date', 500).then(setAllRevenues);
+    });
   }, [revenues]);
 
   const thisMonthRevenue = revenues

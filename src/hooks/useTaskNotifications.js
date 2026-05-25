@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
+import { getCurrentUser } from './useCurrentUser';
 
 // Vérifie chaque minute les tâches dont l'heure est arrivée (ou dans les 30s à venir)
 // et déclenche un toast + une notification navigateur.
@@ -16,7 +17,8 @@ export default function useTaskNotifications() {
 
     const check = async () => {
       const today = format(new Date(), 'yyyy-MM-dd');
-      const tasks = await base44.entities.Task.filter({ status: 'todo', due_date: today });
+      const user = await getCurrentUser();
+      const tasks = await base44.entities.Task.filter({ status: 'todo', due_date: today, created_by_id: user?.id });
       const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
 

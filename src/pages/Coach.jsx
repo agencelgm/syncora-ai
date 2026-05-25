@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Image, Loader2, Wand2, CheckCircle2 } from 'lucide-react';
 import ChatMessage from '@/components/coach/ChatMessage';
 import ImageCapture from '@/components/coach/ImageCapture';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function Coach() {
   const [messages, setMessages] = useState([]);
@@ -22,9 +23,11 @@ export default function Coach() {
   }, [messages]);
 
   const loadData = async () => {
+    const user = await getCurrentUser();
+    const uid = user?.id;
     const [msgs, profiles] = await Promise.all([
-      base44.entities.ChatMessage.list('created_date', 50),
-      base44.entities.UserProfile.list('-created_date', 1),
+      base44.entities.ChatMessage.filter({ created_by_id: uid }, 'created_date', 50),
+      base44.entities.UserProfile.filter({ created_by_id: uid }, '-created_date', 1),
     ]);
     setMessages(msgs);
     setProfile(profiles[0] || null);

@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskItem from '@/components/tasks/TaskItem';
 import PullToRefresh from '@/components/common/PullToRefresh';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 const FILTERS = [
   { key: 'all', label: 'Toutes' },
@@ -26,7 +27,8 @@ export default function Tasks() {
   useEffect(() => { loadTasks(); }, []);
 
   const loadTasks = async () => {
-    const data = await base44.entities.Task.list('-ai_priority_score', 100);
+    const user = await getCurrentUser();
+    const data = await base44.entities.Task.filter({ created_by_id: user?.id }, '-ai_priority_score', 100);
     setTasks(data);
     setLoading(false);
   };

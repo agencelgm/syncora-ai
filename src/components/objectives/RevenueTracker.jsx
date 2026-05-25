@@ -3,6 +3,7 @@ import { Plus, Trash2, Link2, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import TaskPickerDrawer from '@/components/objectives/TaskPickerDrawer';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function RevenueTracker({ revenues, onRefresh }) {
   const [form, setForm] = useState({ amount_fcfa: '', date: format(new Date(), 'yyyy-MM-dd'), source: '', task_id: '', action_label: '' });
@@ -11,7 +12,11 @@ export default function RevenueTracker({ revenues, onRefresh }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (adding) base44.entities.Task.filter({ status: 'done' }, '-completed_at', 50).then(setTasks);
+    if (adding) {
+      getCurrentUser().then(user => {
+        base44.entities.Task.filter({ status: 'done', created_by_id: user?.id }, '-completed_at', 50).then(setTasks);
+      });
+    }
   }, [adding]);
 
   const add = async () => {

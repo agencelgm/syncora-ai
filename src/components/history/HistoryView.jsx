@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { differenceInDays, format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 import PeriodSelector, { getPeriodRange } from './PeriodSelector';
 import HistoryStats from './HistoryStats';
 import WinningActions from './WinningActions';
@@ -19,7 +20,9 @@ export default function HistoryView({ revenues, objectives }) {
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    base44.entities.Task.filter({ status: 'done' }, '-completed_at', 200).then(setTasks);
+    getCurrentUser().then(user => {
+      base44.entities.Task.filter({ status: 'done', created_by_id: user?.id }, '-completed_at', 200).then(setTasks);
+    });
   }, []);
 
   const { from, to } = getPeriodRange(preset, custom);

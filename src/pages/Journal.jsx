@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Plus, Smile, Frown, Meh, Battery, Zap, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 const MOODS = [
   { key: 'excellent', icon: '🚀', label: 'Excellent' },
@@ -31,7 +32,8 @@ export default function Journal() {
   useEffect(() => { loadEntries(); }, []);
 
   const loadEntries = async () => {
-    const data = await base44.entities.JournalEntry.list('-date', 30);
+    const user = await getCurrentUser();
+    const data = await base44.entities.JournalEntry.filter({ created_by_id: user?.id }, '-date', 30);
     setEntries(data);
     setLoading(false);
   };

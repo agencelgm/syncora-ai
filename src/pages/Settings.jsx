@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, ChevronRight, Bell } from 'lucide-react';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 const SKILL_SUGGESTIONS = ['Coaching', 'Marketing digital', 'Vente', 'Copywriting', 'Formation', 'Consulting', 'Design', 'Développement', 'Finance', 'E-commerce'];
 const DOMAIN_SUGGESTIONS = ['Business', 'Santé', 'Tech', 'Éducation', 'Immobilier', 'Mode', 'Food', 'Voyage', 'Personnel'];
@@ -31,7 +32,8 @@ export default function Settings() {
   useEffect(() => { loadProfile(); }, []);
 
   const loadProfile = async () => {
-    const profiles = await base44.entities.UserProfile.list('-created_date', 1);
+    const user = await getCurrentUser();
+    const profiles = await base44.entities.UserProfile.filter({ created_by_id: user?.id }, '-created_date', 1);
     if (profiles[0]) {
       setProfile(profiles[0]);
       setForm({

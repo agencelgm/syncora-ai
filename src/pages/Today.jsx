@@ -13,6 +13,7 @@ import ProgressRing from '@/components/today/ProgressRing';
 import QuickRevenueEntry from '@/components/today/QuickRevenueEntry';
 import WeekCalendar from '@/components/today/WeekCalendar';
 import PullToRefresh from '@/components/common/PullToRefresh';
+import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function Today() {
   const [tasks, setTasks] = useState([]);
@@ -30,12 +31,14 @@ export default function Today() {
 
   const loadData = async () => {
     const today = format(new Date(), 'yyyy-MM-dd');
+    const user = await getCurrentUser();
+    const uid = user?.id;
     const [allTasks, doneTasks, profileData, objData, revData] = await Promise.all([
-      base44.entities.Task.filter({ status: 'todo' }, '-ai_priority_score', 10),
-      base44.entities.Task.filter({ status: 'done' }, '-completed_at', 50),
-      base44.entities.UserProfile.list('-created_date', 1),
-      base44.entities.Objective.filter({ status: 'active' }, '-created_date', 3),
-      base44.entities.RevenueEntry.filter({ date: today }, '-created_date', 20),
+      base44.entities.Task.filter({ status: 'todo', created_by_id: uid }, '-ai_priority_score', 10),
+      base44.entities.Task.filter({ status: 'done', created_by_id: uid }, '-completed_at', 50),
+      base44.entities.UserProfile.filter({ created_by_id: uid }, '-created_date', 1),
+      base44.entities.Objective.filter({ status: 'active', created_by_id: uid }, '-created_date', 3),
+      base44.entities.RevenueEntry.filter({ date: today, created_by_id: uid }, '-created_date', 20),
     ]);
     setTasks(allTasks);
     setCompletedToday(doneTasks.filter(t => t.completed_at?.startsWith(today)).length);
