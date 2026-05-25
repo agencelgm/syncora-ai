@@ -399,16 +399,16 @@ export default function Settings() {
           )}
 
           {activeTab === 'api' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          <div className="bg-muted/30 rounded-2xl p-4 mb-4">
-           <p className="text-xs text-muted-foreground leading-relaxed">
-             🔐 Tes clés API restent chiffrées et privées. Seul ton coach IA y a accès pour analyser tes données GoHighLevel et Chariow.
-           </p>
-          </div>
-          <div className="bg-card border border-border rounded-2xl p-4">
-           <IntegrationSection profile={profile} onUpdated={loadProfile} />
-          </div>
-          </motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+              <div className="bg-muted/30 rounded-2xl p-4 mb-4">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  🔐 Tes clés API restent chiffrées et privées. Seul ton coach IA y a accès pour analyser tes données GoHighLevel et Chariow. Tu peux ajouter plusieurs comptes par service.
+                </p>
+              </div>
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <IntegrationSection onUpdated={loadProfile} />
+              </div>
+            </motion.div>
           )}
           </div>
           );

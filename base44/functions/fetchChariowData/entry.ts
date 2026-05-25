@@ -9,19 +9,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profiles = await base44.entities.UserProfile.filter({ created_by_id: user.id }, '-created_date', 1);
-    const profile = profiles[0];
+    const body = await req.json();
+    const accountId = body?.account_id;
 
-    if (!profile?.chariow_api_key) {
-      return Response.json({ error: 'Chariow API key not configured' }, { status: 400 });
+    if (!accountId) {
+      return Response.json({ error: 'account_id required' }, { status: 400 });
+    }
+
+    const account = await base44.entities.IntegrationAccount.filter({ id: accountId, created_by_id: user.id }, '-created_date', 1);
+    if (!account[0]) {
+      return Response.json({ error: 'Account not found' }, { status: 404 });
+    }
+
+    const accData = account[0];
+    if (accData.service !== 'chariow') {
+      return Response.json({ error: 'Invalid service' }, { status: 400 });
     }
 
     // Récupère les transactions de Chariow
-    // Les endpoints varient selon l'API Chariow
     const chariowResponse = await fetch('https://api.chariow.com/v1/transactions', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${profile.chariow_api_key}`,
+        'Authorization': `Bearer ${accData.api_key}`,
         'Content-Type': 'application/json',
       },
     });
@@ -34,6 +43,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       source: 'chariow',
+      account_name: accData.account_name,
       data: transactions,
       timestamp: new Date().toISOString(),
     });

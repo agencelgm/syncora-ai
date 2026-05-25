@@ -9,19 +9,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profiles = await base44.entities.UserProfile.filter({ created_by_id: user.id }, '-created_date', 1);
-    const profile = profiles[0];
+    const body = await req.json();
+    const accountId = body?.account_id;
 
-    if (!profile?.gohighlevel_api_key) {
-      return Response.json({ error: 'GoHighLevel API key not configured' }, { status: 400 });
+    if (!accountId) {
+      return Response.json({ error: 'account_id required' }, { status: 400 });
     }
 
-    // Récupère les données de GoHighLevel (contacts, notes, tâches, rendez-vous)
-    // Les endpoints varient selon l'API GoHighLevel
+    const account = await base44.entities.IntegrationAccount.filter({ id: accountId, created_by_id: user.id }, '-created_date', 1);
+    if (!account[0]) {
+      return Response.json({ error: 'Account not found' }, { status: 404 });
+    }
+
+    const accData = account[0];
+    if (accData.service !== 'gohighlevel') {
+      return Response.json({ error: 'Invalid service' }, { status: 400 });
+    }
+
+    // Récupère les données de GoHighLevel
     const ghlResponse = await fetch('https://api.gohighlevel.com/v1/contacts', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${profile.gohighlevel_api_key}`,
+        'Authorization': `Bearer ${accData.api_key}`,
         'Content-Type': 'application/json',
       },
     });
@@ -34,6 +43,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       source: 'gohighlevel',
+      account_name: accData.account_name,
       data: contacts,
       timestamp: new Date().toISOString(),
     });
