@@ -32,10 +32,15 @@ export default function TodayTaskCard({ task, index, onComplete }) {
           {task.description && (
             <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">{task.description}</p>
           )}
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bg} ${config.color}`}>
               {config.label}
             </span>
+            {task.due_time && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-electric/10 text-blue-electric flex items-center gap-1">
+                <Clock size={10} /> {task.due_time}
+              </span>
+            )}
             {task.defer_count > 0 && (
               <span className="text-xs text-orange-400 font-medium">
                 ⚠ Reporté {task.defer_count}x

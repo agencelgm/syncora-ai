@@ -13,6 +13,7 @@ export default function TaskForm({ task, onSave, onClose }) {
     description: task?.description || '',
     priority: task?.priority || 'medium',
     due_date: task?.due_date || '',
+    due_time: task?.due_time || '',
     estimated_value_fcfa: task?.estimated_value_fcfa || '',
   });
   const [aiLoading, setAiLoading] = useState(false);
@@ -104,7 +105,7 @@ export default function TaskForm({ task, onSave, onClose }) {
           ))}
         </div>
 
-        <div className="flex gap-3 mb-4">
+        <div className="flex gap-2 mb-3">
           <input
             type="date"
             value={form.due_date}
@@ -112,13 +113,19 @@ export default function TaskForm({ task, onSave, onClose }) {
             className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
           />
           <input
-            type="number"
-            placeholder="Valeur FCFA"
-            value={form.estimated_value_fcfa}
-            onChange={e => setForm(p => ({ ...p, estimated_value_fcfa: e.target.value }))}
-            className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-gold/50"
+            type="time"
+            value={form.due_time}
+            onChange={e => setForm(p => ({ ...p, due_time: e.target.value }))}
+            className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
           />
         </div>
+        <input
+          type="number"
+          placeholder="Valeur estimée (FCFA)"
+          value={form.estimated_value_fcfa}
+          onChange={e => setForm(p => ({ ...p, estimated_value_fcfa: e.target.value }))}
+          className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-gold/50 mb-4"
+        />
 
         <div className="flex gap-2 pt-1">
           <button

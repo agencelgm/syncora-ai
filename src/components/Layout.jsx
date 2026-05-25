@@ -1,5 +1,6 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Home, CheckSquare, Target, BookOpen, MessageCircle, Settings } from 'lucide-react';
+import useTaskNotifications from '@/hooks/useTaskNotifications';
 
 const navItems = [
   { path: '/', icon: Home, label: "Aujourd'hui" },
@@ -11,6 +12,7 @@ const navItems = [
 
 export default function Layout() {
   const location = useLocation();
+  useTaskNotifications();
 
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative">

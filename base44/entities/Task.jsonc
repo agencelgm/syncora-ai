@@ -36,6 +36,10 @@
       "type": "string",
       "format": "date"
     },
+    "due_time": {
+      "type": "string",
+      "description": "Heure de la t\u00e2che au format HH:MM (24h)"
+    },
     "defer_count": {
       "type": "number",
       "default": 0
@@ -72,6 +76,11 @@
     },
     "ai_coaching_note": {
       "type": "string"
+    },
+    "notified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Derni\u00e8re fois qu'une notification a \u00e9t\u00e9 d\u00e9clench\u00e9e pour cette t\u00e2che"
     }
   },
   "required": [
