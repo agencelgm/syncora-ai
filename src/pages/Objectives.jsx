@@ -6,6 +6,7 @@ import ObjectiveCard from '@/components/objectives/ObjectiveCard';
 import ObjectiveForm from '@/components/objectives/ObjectiveForm';
 import RevenueTracker from '@/components/objectives/RevenueTracker';
 import HistoryView from '@/components/history/HistoryView';
+import MonthlyRevenueChart from '@/components/objectives/MonthlyRevenueChart';
 
 export default function Objectives() {
   const [objectives, setObjectives] = useState([]);
@@ -37,6 +38,12 @@ export default function Objectives() {
     setSelectedObj(null);
     loadData();
   };
+
+  // Récupère TOUS les revenus pour le graphique (les 6 derniers mois)
+  const [allRevenues, setAllRevenues] = useState([]);
+  useEffect(() => {
+    base44.entities.RevenueEntry.list('-date', 500).then(setAllRevenues);
+  }, [revenues]);
 
   const thisMonthRevenue = revenues
     .filter(r => r.date?.startsWith(new Date().toISOString().slice(0, 7)))
@@ -83,6 +90,9 @@ export default function Objectives() {
           </div>
         </div>
       )}
+
+      {/* Monthly evolution chart */}
+      <MonthlyRevenueChart revenues={allRevenues} monthlyTarget={monthlyTarget} />
 
       {/* Tabs */}
       <div className="flex gap-2 mb-4">
