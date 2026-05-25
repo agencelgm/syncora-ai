@@ -18,6 +18,10 @@
       "type": "string",
       "description": "Cl\u00e9 API du compte (chiffr\u00e9e en base)"
     },
+    "location_id": {
+      "type": "string",
+      "description": "Location ID GoHighLevel (optionnel, pour identifier la location)"
+    },
     "is_active": {
       "type": "boolean",
       "default": true,

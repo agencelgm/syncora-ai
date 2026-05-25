@@ -10,6 +10,7 @@ export default function IntegrationSection({ onUpdated }) {
   const [adding, setAdding] = useState(null); // 'gohighlevel' or 'chariow'
   const [newAccountName, setNewAccountName] = useState('');
   const [newApiKey, setNewApiKey] = useState('');
+  const [newLocationId, setNewLocationId] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -41,13 +42,18 @@ export default function IntegrationSection({ onUpdated }) {
     setSaving(true);
     setError('');
     try {
-      await base44.entities.IntegrationAccount.create({
+      const payload = {
         service: adding,
         account_name: newAccountName,
         api_key: newApiKey,
-      });
+      };
+      if (adding === 'gohighlevel' && newLocationId.trim()) {
+        payload.location_id = newLocationId;
+      }
+      await base44.entities.IntegrationAccount.create(payload);
       setNewAccountName('');
       setNewApiKey('');
+      setNewLocationId('');
       setAdding(null);
       await loadAccounts();
       onUpdated?.();
@@ -113,6 +119,13 @@ export default function IntegrationSection({ onUpdated }) {
                 {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
             </div>
+            <input
+              type="text"
+              placeholder="Location ID (optionnel)"
+              value={newLocationId}
+              onChange={(e) => setNewLocationId(e.target.value)}
+              className="w-full bg-card rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none border border-border focus:border-gold/50"
+            />
             <div className="flex gap-2">
               <button
                 onClick={() => setAdding(null)}
