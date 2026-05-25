@@ -11,7 +11,7 @@ export const readFunctionError = (err, functionName = 'function') => {
   const message = data?.message || data?.error || err?.message;
 
   if (status === 404) {
-    return `Function Base44 introuvable ou ancienne version active (${functionName}). Recharge l'app; si ca continue, le deploiement Base44 n'a pas encore publie cette function.`;
+    return `Le module de synchronisation n'est pas encore publie cote Base44 (${functionName}). Publie les backend functions dans Base44 Dashboard, puis reessaie.`;
   }
 
   return message || `Erreur pendant l'appel ${functionName}.`;
