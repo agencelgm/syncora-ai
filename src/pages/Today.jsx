@@ -10,11 +10,13 @@ import DailyBriefing from '@/components/today/DailyBriefing';
 import TodayTaskCard from '@/components/today/TodayTaskCard';
 import StreakBadge from '@/components/today/StreakBadge';
 import ProgressRing from '@/components/today/ProgressRing';
+import QuickRevenueEntry from '@/components/today/QuickRevenueEntry';
 
 export default function Today() {
   const [tasks, setTasks] = useState([]);
   const [profile, setProfile] = useState(null);
   const [objectives, setObjectives] = useState([]);
+  const [todayRevenue, setTodayRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [briefingOpen, setBriefingOpen] = useState(false);
 
@@ -24,14 +26,16 @@ export default function Today() {
 
   const loadData = async () => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    const [allTasks, profileData, objData] = await Promise.all([
+    const [allTasks, profileData, objData, revData] = await Promise.all([
       base44.entities.Task.filter({ status: 'todo' }, '-ai_priority_score', 10),
       base44.entities.UserProfile.list('-created_date', 1),
       base44.entities.Objective.filter({ status: 'active' }, '-created_date', 3),
+      base44.entities.RevenueEntry.filter({ date: today }, '-created_date', 20),
     ]);
     setTasks(allTasks);
     setProfile(profileData[0] || null);
     setObjectives(objData);
+    setTodayRevenue(revData.reduce((sum, r) => sum + (r.amount_fcfa || 0), 0));
     setLoading(false);
   };
 
@@ -118,10 +122,26 @@ export default function Today() {
         </AnimatePresence>
       </div>
 
-      {/* Quick add */}
+      {/* Quick add task */}
       <Link to="/tasks" className="mt-5 flex items-center justify-center gap-2 w-full py-3 rounded-2xl border border-dashed border-border text-muted-foreground text-sm hover:border-gold/50 hover:text-gold transition-all">
         <Plus size={16} /> Ajouter une tâche
       </Link>
+
+      {/* Revenue today */}
+      <div className="mt-4">
+        {todayRevenue > 0 && (
+          <div className="bg-success/10 border border-success/30 rounded-2xl px-4 py-3 mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-success font-semibold">REVENUS AUJOURD'HUI</p>
+              <p className="text-xl font-black text-foreground">+{todayRevenue.toLocaleString()} FCFA</p>
+            </div>
+            <Link to="/objectives" className="text-xs text-muted-foreground flex items-center gap-1">
+              Voir tout <ChevronRight size={12} />
+            </Link>
+          </div>
+        )}
+        <QuickRevenueEntry onAdded={loadData} />
+      </div>
 
       <DailyBriefing open={briefingOpen} onClose={() => setBriefingOpen(false)} tasks={tasks} objectives={objectives} />
     </div>

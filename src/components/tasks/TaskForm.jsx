@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { X, Wand2, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Wand2, Loader2, Camera } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import ImageCapture from '@/components/coach/ImageCapture';
 
 const PRIORITIES = ['critical', 'high', 'medium', 'low'];
 const PRIORITY_LABELS = { critical: 'Critique', high: 'Haute', medium: 'Moyenne', low: 'Faible' };
@@ -15,6 +16,15 @@ export default function TaskForm({ task, onSave, onClose }) {
     estimated_value_fcfa: task?.estimated_value_fcfa || '',
   });
   const [aiLoading, setAiLoading] = useState(false);
+  const [showImageCapture, setShowImageCapture] = useState(false);
+
+  const handleImageProcessed = (imageUrl, extractedText) => {
+    setShowImageCapture(false);
+    setForm(prev => ({
+      ...prev,
+      description: (prev.description ? prev.description + '\n' : '') + extractedText,
+    }));
+  };
 
   const enrichWithAI = async () => {
     if (!form.title) return;
@@ -53,9 +63,10 @@ export default function TaskForm({ task, onSave, onClose }) {
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border"
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
+      <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-foreground">{task ? 'Modifier la tâche' : 'Nouvelle tâche'}</h3>
           <button onClick={onClose} className="text-muted-foreground"><X size={20} /></button>
@@ -109,11 +120,17 @@ export default function TaskForm({ task, onSave, onClose }) {
           />
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowImageCapture(true)}
+            className="flex items-center gap-2 bg-muted border border-border text-muted-foreground rounded-xl px-3 py-3 text-sm font-medium"
+          >
+            <Camera size={14} />
+          </button>
           <button
             onClick={enrichWithAI}
             disabled={aiLoading || !form.title}
-            className="flex items-center gap-2 bg-blue-electric/10 border border-blue-electric/30 text-blue-electric rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 bg-blue-electric/10 border border-blue-electric/30 text-blue-electric rounded-xl px-3 py-3 text-sm font-medium disabled:opacity-50"
           >
             {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
             IA
@@ -122,9 +139,19 @@ export default function TaskForm({ task, onSave, onClose }) {
             onClick={handleSubmit}
             className="flex-1 bg-gold text-background rounded-xl py-3 text-sm font-bold"
           >
-            {task ? 'Modifier' : 'Créer la tâche'}
+            {task ? 'Modifier' : 'Créer'}
           </button>
         </div>
+
+        <AnimatePresence>
+          {showImageCapture && (
+            <ImageCapture
+              onProcessed={handleImageProcessed}
+              onClose={() => setShowImageCapture(false)}
+            />
+          )}
+        </AnimatePresence>
+      </div>
       </motion.div>
     </motion.div>
   );

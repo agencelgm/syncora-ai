@@ -11,6 +11,7 @@ import Tasks from '@/pages/Tasks';
 import Objectives from '@/pages/Objectives';
 import Journal from '@/pages/Journal';
 import Coach from '@/pages/Coach';
+import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -40,6 +41,7 @@ const AuthenticatedApp = () => {
         <Route path="/objectives" element={<Objectives />} />
         <Route path="/journal" element={<Journal />} />
         <Route path="/coach" element={<Coach />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

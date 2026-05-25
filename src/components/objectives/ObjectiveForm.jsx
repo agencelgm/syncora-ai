@@ -3,7 +3,14 @@ import { motion } from 'framer-motion';
 import { X, Wand2, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-const CATEGORIES = ['financial', 'health', 'learning', 'relationship', 'project', 'other'];
+const CATEGORIES = [
+  { key: 'financial', label: '💰 Finance' },
+  { key: 'health', label: '💪 Santé' },
+  { key: 'learning', label: '📚 Apprentissage' },
+  { key: 'relationship', label: '🤝 Relations' },
+  { key: 'project', label: '🚀 Projet' },
+  { key: 'other', label: '✨ Autre' },
+];
 
 export default function ObjectiveForm({ objective, onSave, onClose }) {
   const [form, setForm] = useState({
@@ -61,40 +68,50 @@ export default function ObjectiveForm({ objective, onSave, onClose }) {
           className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm mb-3 outline-none border border-transparent focus:border-gold/50"
         />
 
-        <div className="flex gap-2 mb-3 overflow-x-auto">
+        <textarea
+          placeholder="Description (optionnel)..."
+          value={form.description}
+          onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+          rows={2}
+          className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm mb-3 outline-none border border-transparent focus:border-gold/50 resize-none"
+        />
+
+        <div className="flex flex-wrap gap-2 mb-3">
           {CATEGORIES.map(c => (
             <button
-              key={c}
-              onClick={() => setForm(p => ({ ...p, category: c }))}
-              className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${form.category === c ? 'bg-gold text-background' : 'bg-muted text-muted-foreground'}`}
+              key={c.key}
+              onClick={() => setForm(p => ({ ...p, category: c.key }))}
+              className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${form.category === c.key ? 'bg-gold text-background' : 'bg-muted text-muted-foreground'}`}
             >
-              {c}
+              {c.label}
             </button>
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Cible (FCFA)</label>
-            <input
-              type="number"
-              placeholder="5 000 000"
-              value={form.target_amount_fcfa}
-              onChange={e => setForm(p => ({ ...p, target_amount_fcfa: e.target.value }))}
-              className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
-            />
+        {form.category === 'financial' && (
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Cible (FCFA)</label>
+              <input
+                type="number"
+                placeholder="5 000 000"
+                value={form.target_amount_fcfa}
+                onChange={e => setForm(p => ({ ...p, target_amount_fcfa: e.target.value }))}
+                className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Actuel (FCFA)</label>
+              <input
+                type="number"
+                placeholder="500 000"
+                value={form.current_amount_fcfa}
+                onChange={e => setForm(p => ({ ...p, current_amount_fcfa: e.target.value }))}
+                className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Actuel (FCFA)</label>
-            <input
-              type="number"
-              placeholder="500 000"
-              value={form.current_amount_fcfa}
-              onChange={e => setForm(p => ({ ...p, current_amount_fcfa: e.target.value }))}
-              className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
-            />
-          </div>
-        </div>
+        )}
 
         <input
           type="date"

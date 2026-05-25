@@ -1,12 +1,12 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Home, CheckSquare, Target, BookOpen, MessageCircle } from 'lucide-react';
+import { Home, CheckSquare, Target, BookOpen, MessageCircle, Settings } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: Home, label: "Aujourd'hui" },
   { path: '/tasks', icon: CheckSquare, label: 'Tâches' },
   { path: '/objectives', icon: Target, label: 'Objectifs' },
-  { path: '/journal', icon: BookOpen, label: 'Journal' },
   { path: '/coach', icon: MessageCircle, label: 'Coach IA' },
+  { path: '/settings', icon: Settings, label: 'Profil' },
 ];
 
 export default function Layout() {
