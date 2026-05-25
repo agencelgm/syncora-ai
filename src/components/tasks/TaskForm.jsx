@@ -81,7 +81,6 @@ export default function TaskForm({ task, onSave, onClose }) {
 
         <input
           type="text"
-          autoFocus
           placeholder="Titre de la tâche..."
           value={form.title}
           onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
@@ -136,7 +135,7 @@ export default function TaskForm({ task, onSave, onClose }) {
 
         <div className="flex gap-2 pt-1">
           <button
-            onClick={() => setShowImageCapture(true)}
+            onClick={() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); setShowImageCapture(true); }}
             className="flex items-center justify-center bg-secondary border border-border text-foreground rounded-xl w-12 h-12 shrink-0"
           >
             <Camera size={18} />
