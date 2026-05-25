@@ -7,7 +7,8 @@ export default function ImageCapture({ onProcessed, onClose }) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
-  const fileRef = useRef();
+  const galleryRef = useRef();
+  const cameraRef = useRef();
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -22,7 +23,7 @@ export default function ImageCapture({ onProcessed, onClose }) {
     if (!fileUrl) return;
     setUploading(true);
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analyse cette image (photo de cahier, note manuscrite ou capture d'écran). 
+      prompt: `Analyse cette image (photo de cahier, note manuscrite ou capture d'écran).
 Extrait et structure tout le contenu textuel.
 Identifie les tâches, actions, idées et notes.
 Retourne en JSON:
@@ -50,7 +51,8 @@ Retourne en JSON:
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border pb-8"
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl p-6 border-t border-border"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 2rem)' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -64,7 +66,7 @@ Retourne en JSON:
           </div>
         ) : (
           <button
-            onClick={() => fileRef.current?.click()}
+            onClick={() => galleryRef.current?.click()}
             className="w-full h-40 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 text-muted-foreground mb-4 hover:border-gold/50 transition-all"
           >
             <Upload size={28} />
@@ -73,21 +75,37 @@ Retourne en JSON:
         )}
 
         <input
-          ref={fileRef}
+          ref={galleryRef}
           type="file"
           accept="image/*"
+          className="hidden"
+          onChange={e => handleFile(e.target.files[0])}
+        />
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
           className="hidden"
           onChange={e => handleFile(e.target.files[0])}
         />
 
         <div className="flex gap-3">
           {!preview ? (
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2"
-            >
-              <Upload size={16} /> Galerie
-            </button>
+            <>
+              <button
+                onClick={() => galleryRef.current?.click()}
+                className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Upload size={16} /> Galerie
+              </button>
+              <button
+                onClick={() => cameraRef.current?.click()}
+                className="flex-1 bg-muted text-muted-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Camera size={16} /> Photo
+              </button>
+            </>
           ) : (
             <button
               onClick={() => { setPreview(null); setFileUrl(null); }}

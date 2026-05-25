@@ -125,7 +125,7 @@ Si pertinent, propose des tâches à créer en listant task_titles (max 3).`,
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <div className="px-4 pt-8 pb-3 border-b border-border bg-background">
+      <div className="px-4 pb-3 border-b border-border bg-background" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-gradient-to-br from-gold to-gold/60 rounded-xl flex items-center justify-center">
             <Wand2 size={18} className="text-background" />
