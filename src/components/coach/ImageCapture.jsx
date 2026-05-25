@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, Upload, Camera, Loader2, AlertCircle } from 'lucide-react';
@@ -25,6 +25,24 @@ const normalizeExtractedTasks = (tasks = []) => (
     .filter(task => task.title)
 );
 
+function FileInputControl({ capture, disabled, className, children, onChange }) {
+  return (
+    <label className={`${className} ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
+      <input
+        type="file"
+        accept="image/*"
+        capture={capture}
+        disabled={disabled}
+        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+        onChange={onChange}
+      />
+      <span className="pointer-events-none flex items-center justify-center gap-2">
+        {children}
+      </span>
+    </label>
+  );
+}
+
 export default function ImageCapture({
   mode = 'notes',
   onProcessed,
@@ -36,17 +54,9 @@ export default function ImageCapture({
   const [preview, setPreview] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
   const [error, setError] = useState('');
-  const galleryInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
 
   const isBusy = uploading || processing;
   const isTaskMode = mode === 'tasks';
-
-  const openFilePicker = (inputRef) => {
-    if (isBusy) return;
-    setError('');
-    inputRef.current?.click();
-  };
 
   const resetImage = () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -91,6 +101,7 @@ export default function ImageCapture({
   const handleInputChange = (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
+    setError('');
     handleFile(file);
   };
 
@@ -197,24 +208,6 @@ Retourne en JSON:
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 2rem)' }}
         onClick={e => e.stopPropagation()}
       >
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          tabIndex={-1}
-          onChange={handleInputChange}
-        />
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="sr-only"
-          tabIndex={-1}
-          onChange={handleInputChange}
-        />
-
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-foreground">Envoyer une image</h3>
           <button onClick={onClose} className="text-muted-foreground"><X size={20} /></button>
@@ -225,15 +218,14 @@ Retourne en JSON:
             <img src={preview} alt="Preview" className="w-full rounded-2xl max-h-48 object-cover" />
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => openFilePicker(galleryInputRef)}
+          <FileInputControl
             disabled={isBusy}
-            className="w-full h-40 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 text-muted-foreground mb-4 hover:border-gold/50 hover:text-foreground transition-all disabled:opacity-60"
+            onChange={handleInputChange}
+            className="relative w-full h-40 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 text-muted-foreground mb-4 hover:border-gold/50 hover:text-foreground transition-all overflow-hidden"
           >
             <Upload size={28} />
             <span className="text-sm">Sélectionne une photo ou capture</span>
-          </button>
+          </FileInputControl>
         )}
 
         {error && (
@@ -246,22 +238,21 @@ Retourne en JSON:
         <div className="flex gap-3">
           {!preview ? (
             <>
-              <button
-                type="button"
-                onClick={() => openFilePicker(galleryInputRef)}
+              <FileInputControl
                 disabled={isBusy}
-                className="flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all disabled:opacity-60"
+                onChange={handleInputChange}
+                className="relative flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all overflow-hidden"
               >
                 <Upload size={16} /> Galerie
-              </button>
-              <button
-                type="button"
-                onClick={() => openFilePicker(cameraInputRef)}
+              </FileInputControl>
+              <FileInputControl
+                capture="environment"
                 disabled={isBusy}
-                className="flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all disabled:opacity-60"
+                onChange={handleInputChange}
+                className="relative flex-1 bg-card border border-border text-foreground rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 hover:border-gold/50 hover:text-gold transition-all overflow-hidden"
               >
                 <Camera size={16} /> Photo
-              </button>
+              </FileInputControl>
             </>
           ) : (
             <button
