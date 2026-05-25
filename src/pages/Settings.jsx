@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, Bell } from 'lucide-react';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
+import IntegrationSection from '@/components/settings/IntegrationSection';
 import { getCurrentUser } from '@/hooks/useCurrentUser';
 
 const SKILL_SUGGESTIONS = ['Coaching', 'Marketing digital', 'Vente', 'Copywriting', 'Formation', 'Consulting', 'Design', 'Développement', 'Finance', 'E-commerce'];
@@ -103,6 +104,7 @@ export default function Settings() {
     { key: 'profile', label: 'Profil' },
     { key: 'revenue', label: 'Revenus' },
     { key: 'integrations', label: 'Connexions' },
+    { key: 'api', label: 'API' },
   ];
 
   if (loading) return (
@@ -393,8 +395,21 @@ export default function Settings() {
           </div>
 
           <DeleteAccountSection />
-        </motion.div>
-      )}
-    </div>
-  );
-}
+          </motion.div>
+          )}
+
+          {activeTab === 'api' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <div className="bg-muted/30 rounded-2xl p-4 mb-4">
+           <p className="text-xs text-muted-foreground leading-relaxed">
+             🔐 Tes clés API restent chiffrées et privées. Seul ton coach IA y a accès pour analyser tes données GoHighLevel et Chariow.
+           </p>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-4">
+           <IntegrationSection profile={profile} onUpdated={loadProfile} />
+          </div>
+          </motion.div>
+          )}
+          </div>
+          );
+          }

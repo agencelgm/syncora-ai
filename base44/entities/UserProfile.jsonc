@@ -49,6 +49,14 @@
       "type": "boolean",
       "default": true,
       "description": "Recevoir un email de rappel quotidien en fin de journ\u00e9e"
+    },
+    "gohighlevel_api_key": {
+      "type": "string",
+      "description": "Cl\u00e9 API personnelle GoHighLevel (chiffr\u00e9e en base de donn\u00e9es)"
+    },
+    "chariow_api_key": {
+      "type": "string",
+      "description": "Cl\u00e9 API personnelle Chariow (chiffr\u00e9e en base de donn\u00e9es)"
     }
   },
   "required": []
