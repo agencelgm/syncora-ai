@@ -120,24 +120,24 @@ export default function TaskForm({ task, onSave, onClose }) {
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-1">
           <button
             onClick={() => setShowImageCapture(true)}
-            className="flex items-center gap-2 bg-muted border border-border text-muted-foreground rounded-xl px-3 py-3 text-sm font-medium"
+            className="flex items-center justify-center bg-secondary border border-border text-foreground rounded-xl w-12 h-12 shrink-0"
           >
-            <Camera size={14} />
+            <Camera size={18} />
           </button>
           <button
             onClick={enrichWithAI}
             disabled={aiLoading || !form.title}
-            className="flex items-center gap-2 bg-blue-electric/10 border border-blue-electric/30 text-blue-electric rounded-xl px-3 py-3 text-sm font-medium disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 bg-blue-electric/20 border border-blue-electric/50 text-blue-electric rounded-xl px-4 h-12 text-sm font-semibold shrink-0 disabled:opacity-40"
           >
-            {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+            {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
             IA
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 bg-gold text-background rounded-xl py-3 text-sm font-bold"
+            className="flex-1 bg-gold text-background rounded-xl h-12 text-base font-bold shadow-lg shadow-gold/30"
           >
             {task ? 'Modifier' : 'Créer'}
           </button>
