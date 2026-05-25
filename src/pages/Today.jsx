@@ -45,13 +45,14 @@ export default function Today() {
   };
 
   const completeTask = async (task) => {
+    // Mise à jour optimiste : UI snappy avant l'appel API
+    setTasks(prev => prev.filter(t => t.id !== task.id));
+    setCompletedToday(c => c + 1);
+    confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 }, colors: ['#F5A623', '#3B82F6', '#10B981'] });
     await base44.entities.Task.update(task.id, {
       status: 'done',
       completed_at: new Date().toISOString(),
     });
-    confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 }, colors: ['#F5A623', '#3B82F6', '#10B981'] });
-    setTasks(prev => prev.filter(t => t.id !== task.id));
-    setCompletedToday(c => c + 1);
   };
 
   const isSelectedToday = isDateToday(selectedDate);

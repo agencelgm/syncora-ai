@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { User, Zap, Mail, MessageCircle, Plus, X, Save, Loader2, ChevronRight, Bell } from 'lucide-react';
+import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 
 const SKILL_SUGGESTIONS = ['Coaching', 'Marketing digital', 'Vente', 'Copywriting', 'Formation', 'Consulting', 'Design', 'Développement', 'Finance', 'E-commerce'];
 const DOMAIN_SUGGESTIONS = ['Business', 'Santé', 'Tech', 'Éducation', 'Immobilier', 'Mode', 'Food', 'Voyage', 'Personnel'];
@@ -384,6 +385,8 @@ export default function Settings() {
               🔒 Tes données restent privées. Les connexions externes (WhatsApp, email) te permettent de recevoir des résumés et d'interagir avec ton coach sans ouvrir l'app.
             </p>
           </div>
+
+          <DeleteAccountSection />
         </motion.div>
       )}
     </div>

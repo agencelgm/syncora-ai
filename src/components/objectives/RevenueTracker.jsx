@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Link2 } from 'lucide-react';
+import { Plus, Trash2, Link2, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
+import TaskPickerDrawer from '@/components/objectives/TaskPickerDrawer';
 
 export default function RevenueTracker({ revenues, onRefresh }) {
   const [form, setForm] = useState({ amount_fcfa: '', date: format(new Date(), 'yyyy-MM-dd'), source: '', task_id: '', action_label: '' });
   const [adding, setAdding] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (adding) base44.entities.Task.filter({ status: 'done' }, '-completed_at', 50).then(setTasks);
@@ -68,16 +70,25 @@ export default function RevenueTracker({ revenues, onRefresh }) {
           />
 
           <label className="text-xs text-muted-foreground mb-1 mt-1 block flex items-center gap-1"><Link2 size={12} /> Action liée (essentiel pour l'historique)</label>
-          <select
-            value={form.task_id}
-            onChange={e => setForm(p => ({ ...p, task_id: e.target.value }))}
-            className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm mb-2 outline-none border border-transparent focus:border-gold/50"
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm mb-2 outline-none border border-transparent focus:border-gold/50 flex items-center justify-between text-left"
           >
-            <option value="">— Aucune tâche liée —</option>
-            {tasks.map(t => (
-              <option key={t.id} value={t.id}>{t.title}</option>
-            ))}
-          </select>
+            <span className={form.task_id ? 'text-foreground truncate pr-2' : 'text-muted-foreground'}>
+              {form.task_id
+                ? (tasks.find(t => t.id === form.task_id)?.title || 'Tâche liée')
+                : '— Aucune tâche liée —'}
+            </span>
+            <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+          </button>
+          <TaskPickerDrawer
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            tasks={tasks}
+            selectedId={form.task_id}
+            onSelect={(id) => setForm(p => ({ ...p, task_id: id }))}
+          />
           {!form.task_id && (
             <input
               type="text"

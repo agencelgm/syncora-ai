@@ -16,10 +16,13 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative">
-      <div className="flex-1 overflow-y-auto pb-20">
+      <div className="flex-1 overflow-y-auto pb-24">
         <Outlet />
       </div>
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card border-t border-border z-[99]">
+      <nav
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card border-t border-border z-[99]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div className="flex items-center justify-around px-2 py-2">
           {navItems.map(({ path, icon: Icon, label }) => {
             const isActive = location.pathname === path;

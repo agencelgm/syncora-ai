@@ -47,6 +47,15 @@
   body {
     @apply bg-background text-foreground font-inter;
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  button,
+  nav a,
+  [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   ::-webkit-scrollbar {

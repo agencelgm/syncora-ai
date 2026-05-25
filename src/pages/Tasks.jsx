@@ -42,18 +42,21 @@ export default function Tasks() {
   };
 
   const handleComplete = async (task) => {
-    await base44.entities.Task.update(task.id, { status: 'done', completed_at: new Date().toISOString() });
-    loadTasks();
+    // Update optimiste
+    const completedAt = new Date().toISOString();
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'done', completed_at: completedAt } : t));
+    await base44.entities.Task.update(task.id, { status: 'done', completed_at: completedAt });
   };
 
   const handleDefer = async (task) => {
-    await base44.entities.Task.update(task.id, { status: 'deferred', defer_count: (task.defer_count || 0) + 1 });
-    loadTasks();
+    const newCount = (task.defer_count || 0) + 1;
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'deferred', defer_count: newCount } : t));
+    await base44.entities.Task.update(task.id, { status: 'deferred', defer_count: newCount });
   };
 
   const handleDelete = async (task) => {
+    setTasks(prev => prev.filter(t => t.id !== task.id));
     await base44.entities.Task.delete(task.id);
-    loadTasks();
   };
 
   const today = format(new Date(), 'yyyy-MM-dd');
