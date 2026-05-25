@@ -5,6 +5,7 @@ import { Target, Plus, TrendingUp, TrendingDown, Zap, ChevronRight, DollarSign, 
 import ObjectiveCard from '@/components/objectives/ObjectiveCard';
 import ObjectiveForm from '@/components/objectives/ObjectiveForm';
 import RevenueTracker from '@/components/objectives/RevenueTracker';
+import RevenueSummaryTable from '@/components/objectives/RevenueSummaryTable';
 import HistoryView from '@/components/history/HistoryView';
 import MonthlyRevenueChart from '@/components/objectives/MonthlyRevenueChart';
 
@@ -131,7 +132,10 @@ export default function Objectives() {
           )}
         </div>
       ) : tab === 'revenues' ? (
-        <RevenueTracker revenues={revenues} onRefresh={loadData} />
+        <>
+          <RevenueSummaryTable revenues={allRevenues} />
+          <RevenueTracker revenues={revenues} onRefresh={loadData} />
+        </>
       ) : (
         <HistoryView revenues={revenues} objectives={objectives} />
       )}
