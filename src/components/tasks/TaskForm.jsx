@@ -70,12 +70,11 @@ export default function TaskForm({ task, onSave, onClose }) {
         ref={scrollRef}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border overflow-y-auto"
-        style={{ maxHeight: '75dvh' }}
+        className="w-full max-w-md mx-auto bg-card rounded-t-3xl border-t border-border max-h-[80dvh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-      <div className="px-5 pt-4 pb-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}>
-        <div className="flex items-center justify-between mb-4">
+      <div className="px-4 pt-3 pb-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}>
+        <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-foreground">{task ? 'Modifier la tâche' : 'Nouvelle tâche'}</h3>
           <button onClick={onClose} className="text-muted-foreground"><X size={20} /></button>
         </div>
@@ -85,7 +84,7 @@ export default function TaskForm({ task, onSave, onClose }) {
           placeholder="Titre de la tâche..."
           value={form.title}
           onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-          className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm mb-3 outline-none border border-transparent focus:border-gold/50"
+          className="w-full bg-muted rounded-xl px-4 py-2.5 text-foreground placeholder:text-muted-foreground text-sm mb-2 outline-none border border-transparent focus:border-gold/50"
         />
 
         <textarea
@@ -93,15 +92,15 @@ export default function TaskForm({ task, onSave, onClose }) {
           value={form.description}
           onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
           rows={2}
-          className="w-full bg-muted rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground text-sm mb-3 outline-none border border-transparent focus:border-gold/50 resize-none"
+          className="w-full bg-muted rounded-xl px-4 py-2.5 text-foreground placeholder:text-muted-foreground text-sm mb-2 outline-none border border-transparent focus:border-gold/50 resize-none"
         />
 
-        <div className="flex gap-2 mb-3">
+        <div className="flex gap-2 mb-2">
           {PRIORITIES.map(p => (
             <button
               key={p}
               onClick={() => setForm(prev => ({ ...prev, priority: p }))}
-              className={`flex-1 text-xs py-2 rounded-xl font-medium transition-all ${
+              className={`flex-1 text-xs py-1.5 rounded-xl font-medium transition-all ${
                 form.priority === p
                   ? 'bg-gold text-background'
                   : 'bg-muted text-muted-foreground'
@@ -112,18 +111,18 @@ export default function TaskForm({ task, onSave, onClose }) {
           ))}
         </div>
 
-        <div className="flex gap-2 mb-3">
+        <div className="flex gap-2 mb-2">
           <input
             type="date"
             value={form.due_date}
             onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))}
-            className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
+            className="flex-1 bg-muted rounded-xl px-3 py-2 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
           />
           <input
             type="time"
             value={form.due_time}
             onChange={e => setForm(p => ({ ...p, due_time: e.target.value }))}
-            className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
+            className="flex-1 bg-muted rounded-xl px-3 py-2 text-foreground text-sm outline-none border border-transparent focus:border-gold/50"
           />
         </div>
         <input
@@ -131,10 +130,10 @@ export default function TaskForm({ task, onSave, onClose }) {
           placeholder="Valeur estimée (FCFA)"
           value={form.estimated_value_fcfa}
           onChange={e => setForm(p => ({ ...p, estimated_value_fcfa: e.target.value }))}
-          className="w-full bg-muted rounded-xl px-3 py-2.5 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-gold/50 mb-4"
+          className="w-full bg-muted rounded-xl px-3 py-2 text-foreground placeholder:text-muted-foreground text-sm outline-none border border-transparent focus:border-gold/50 mb-3"
         />
 
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2">
           <button
             onClick={() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); setShowImageCapture(true); }}
             className="flex items-center justify-center bg-secondary border border-border text-foreground rounded-xl w-12 h-12 shrink-0"
